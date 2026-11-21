@@ -1,0 +1,172 @@
+{
+  "by_jammer": {
+    "barrage": {
+      "estimates": 109,
+      "coverage_pct": 55.1,
+      "mean_m": 94.8,
+      "median_m": 63.1,
+      "p95_m": 291.4,
+      "worst_m": 291.4,
+      "inside_radius_pct": 79.8
+    },
+    "random": {
+      "estimates": 85,
+      "coverage_pct": 42.9,
+      "mean_m": 117.0,
+      "median_m": 60.1,
+      "p95_m": 304.2,
+      "worst_m": 308.9,
+      "inside_radius_pct": 69.4
+    },
+    "sweep": {
+      "estimates": 89,
+      "coverage_pct": 44.9,
+      "mean_m": 75.1,
+      "median_m": 68.5,
+      "p95_m": 215.2,
+      "worst_m": 215.2,
+      "inside_radius_pct": 100.0
+    },
+    "reactive": {
+      "estimates": 58,
+      "coverage_pct": 29.3,
+      "mean_m": 54.3,
+      "median_m": 49.8,
+      "p95_m": 112.7,
+      "worst_m": 112.7,
+      "inside_radius_pct": 100.0
+    },
+    "follower": {
+      "estimates": 56,
+      "coverage_pct": 28.3,
+      "mean_m": 59.2,
+      "median_m": 54.0,
+      "p95_m": 112.0,
+      "worst_m": 112.0,
+      "inside_radius_pct": 100.0
+    },
+    "smart": {
+      "estimates": 67,
+      "coverage_pct": 33.8,
+      "mean_m": 84.2,
+      "median_m": 49.5,
+      "p95_m": 256.9,
+      "worst_m": 256.9,
+      "inside_radius_pct": 83.6
+    }
+  },
+  "by_position": {
+    "(220, 140)": {
+      "estimates": 146,
+      "coverage_pct": 73.7,
+      "mean_m": 16.5,
+      "median_m": 12.4,
+      "p95_m": 51.1,
+      "worst_m": 89.9,
+      "inside_radius_pct": 100.0
+    },
+    "(600, 450)": {
+      "estimates": 120,
+      "coverage_pct": 60.6,
+      "mean_m": 47.9,
+      "median_m": 47.5,
+      "p95_m": 67.9,
+      "worst_m": 69.6,
+      "inside_radius_pct": 100.0
+    },
+    "(900, 200)": {
+      "estimates": 0,
+      "coverage_pct": 0.0
+    },
+    "(350, -150)": {
+      "estimates": 130,
+      "coverage_pct": 65.7,
+      "mean_m": 101.5,
+      "median_m": 106.1,
+      "p95_m": 127.6,
+      "worst_m": 127.6,
+      "inside_radius_pct": 100.0
+    },
+    "(100, 650)": {
+      "estimates": 0,
+      "coverage_pct": 0.0
+    },
+    "(800, 700)": {
+      "estimates": 68,
+      "coverage_pct": 34.3,
+      "mean_m": 260.4,
+      "median_m": 256.9,
+      "p95_m": 308.9,
+      "worst_m": 308.9,
+      "inside_radius_pct": 13.2
+    }
+  },
+  "by_terrain": {
+    "open field (arena)": {
+      "estimates": 464,
+      "coverage_pct": 39.1,
+      "mean_m": 84.2,
+      "median_m": 58.4,
+      "p95_m": 263.8,
+      "worst_m": 308.9,
+      "inside_radius_pct": 87.3
+    },
+    "urban_patrol": {
+      "estimates": 61,
+      "coverage_pct": 23.1,
+      "mean_m": 14.4,
+      "median_m": 12.9,
+      "p95_m": 27.7,
+      "worst_m": 27.7,
+      "inside_radius_pct": 100.0
+    },
+    "forest_ambush": {
+      "estimates": 0,
+      "coverage_pct": 0.0
+    },
+    "border_convoy": {
+      "estimates": 22,
+      "coverage_pct": 8.3,
+      "mean_m": 28.6,
+      "median_m": 26.0,
+      "p95_m": 44.8,
+      "worst_m": 81.1,
+      "inside_radius_pct": 100.0
+    }
+  },
+  "positions": [
+    [
+      220,
+      140
+    ],
+    [
+      600,
+      450
+    ],
+    [
+      900,
+      200
+    ],
+    [
+      350,
+      -150
+    ],
+    [
+      100,
+      650
+    ],
+    [
+      800,
+      700
+    ]
+  ],
+  "overall": {
+    "estimates": 464,
+    "coverage_pct": 39.1,
+    "mean_m": 84.2,
+    "median_m": 58.4,
+    "p95_m": 263.8,
+    "worst_m": 308.9,
+    "inside_radius_pct": 87.3
+  }
+}

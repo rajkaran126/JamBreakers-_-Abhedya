@@ -1,0 +1,1807 @@
+{
+ "created": "2026-11-21 13:22",
+ "seeds": [
+  101,
+  102,
+  103,
+  104,
+  105,
+  106,
+  107,
+  108
+ ],
+ "duration_s": 12.0,
+ "runs": 1136,
+ "wall_s": 476,
+ "table": [
+  {
+   "group": "jammer power",
+   "condition": "barrage, 30 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 88.9,
+    "sd": 0.8,
+    "ci95": [
+     88.3,
+     89.6
+    ],
+    "worst": 87.5
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.8,
+    "sd": 0.0,
+    "ci95": [
+     99.8,
+     99.9
+    ],
+    "worst": 99.8
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "barrage, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 23.9,
+    "sd": 0.4,
+    "ci95": [
+     23.5,
+     24.2
+    ],
+    "worst": 22.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.9,
+    "sd": 0.7,
+    "ci95": [
+     94.3,
+     95.6
+    ],
+    "worst": 94.0
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "barrage, 46 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 5.4,
+    "sd": 0.4,
+    "ci95": [
+     5.1,
+     5.7
+    ],
+    "worst": 4.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 64.9,
+    "sd": 2.9,
+    "ci95": [
+     62.4,
+     67.3
+    ],
+    "worst": 62.5
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "barrage, close",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 15.1,
+    "sd": 0.4,
+    "ci95": [
+     14.8,
+     15.4
+    ],
+    "worst": 14.5
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 95.9,
+    "sd": 0.5,
+    "ci95": [
+     95.5,
+     96.3
+    ],
+    "worst": 95.6
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "barrage, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 23.9,
+    "sd": 0.4,
+    "ci95": [
+     23.5,
+     24.2
+    ],
+    "worst": 22.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.9,
+    "sd": 0.7,
+    "ci95": [
+     94.3,
+     95.6
+    ],
+    "worst": 94.0
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "barrage, far (800, 650)",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 49.7,
+    "sd": 0.8,
+    "ci95": [
+     49.0,
+     50.4
+    ],
+    "worst": 48.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 93.6,
+    "sd": 0.5,
+    "ci95": [
+     93.3,
+     94.0
+    ],
+    "worst": 93.1
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "barrage, 0.5x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 21.7,
+    "sd": 0.4,
+    "ci95": [
+     21.3,
+     22.0
+    ],
+    "worst": 21.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 95.1,
+    "sd": 0.7,
+    "ci95": [
+     94.6,
+     95.7
+    ],
+    "worst": 94.2
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "barrage, 1x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 23.9,
+    "sd": 0.4,
+    "ci95": [
+     23.5,
+     24.2
+    ],
+    "worst": 22.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.9,
+    "sd": 0.7,
+    "ci95": [
+     94.3,
+     95.6
+    ],
+    "worst": 94.0
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "barrage, 2x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 24.2,
+    "sd": 0.3,
+    "ci95": [
+     23.9,
+     24.4
+    ],
+    "worst": 23.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.4,
+    "sd": 0.7,
+    "ci95": [
+     93.8,
+     95.0
+    ],
+    "worst": 93.5
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "barrage, 4 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 23.9,
+    "sd": 0.4,
+    "ci95": [
+     23.5,
+     24.2
+    ],
+    "worst": 22.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.9,
+    "sd": 0.7,
+    "ci95": [
+     94.3,
+     95.6
+    ],
+    "worst": 94.0
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "barrage, 8 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 21.9,
+    "sd": 0.5,
+    "ci95": [
+     21.5,
+     22.3
+    ],
+    "worst": 21.3
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.8,
+    "sd": 0.3,
+    "ci95": [
+     94.5,
+     95.0
+    ],
+    "worst": 94.4
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "barrage, no background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 23.9,
+    "sd": 0.4,
+    "ci95": [
+     23.5,
+     24.2
+    ],
+    "worst": 22.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 94.9,
+    "sd": 0.7,
+    "ci95": [
+     94.3,
+     95.6
+    ],
+    "worst": 94.0
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "barrage, with background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 23.6,
+    "sd": 0.6,
+    "ci95": [
+     23.1,
+     24.0
+    ],
+    "worst": 22.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 93.8,
+    "sd": 1.0,
+    "ci95": [
+     92.9,
+     94.6
+    ],
+    "worst": 92.3
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "random, 30 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 76.1,
+    "sd": 0.7,
+    "ci95": [
+     75.6,
+     76.7
+    ],
+    "worst": 74.7
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.8,
+    "sd": 0.9,
+    "ci95": [
+     98.0,
+     99.6
+    ],
+    "worst": 97.3
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "random, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.7,
+    "sd": 0.5,
+    "ci95": [
+     64.3,
+     65.1
+    ],
+    "worst": 64.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.7,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.5
+    ],
+    "worst": 96.2
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "random, 46 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 62.5,
+    "sd": 0.2,
+    "ci95": [
+     62.3,
+     62.7
+    ],
+    "worst": 62.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.1,
+    "sd": 1.2,
+    "ci95": [
+     97.1,
+     99.2
+    ],
+    "worst": 96.1
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "random, close",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 63.8,
+    "sd": 0.4,
+    "ci95": [
+     63.5,
+     64.1
+    ],
+    "worst": 63.5
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.7,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.5
+    ],
+    "worst": 96.3
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "random, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.7,
+    "sd": 0.5,
+    "ci95": [
+     64.3,
+     65.1
+    ],
+    "worst": 64.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.7,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.5
+    ],
+    "worst": 96.2
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "random, far (800, 650)",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 76.0,
+    "sd": 0.3,
+    "ci95": [
+     75.7,
+     76.3
+    ],
+    "worst": 75.5
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.9,
+    "sd": 0.8,
+    "ci95": [
+     98.2,
+     99.6
+    ],
+    "worst": 97.1
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "random, 0.5x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.4,
+    "sd": 0.5,
+    "ci95": [
+     64.0,
+     64.8
+    ],
+    "worst": 63.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.6,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.4
+    ],
+    "worst": 96.2
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "random, 1x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.7,
+    "sd": 0.5,
+    "ci95": [
+     64.3,
+     65.1
+    ],
+    "worst": 64.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.7,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.5
+    ],
+    "worst": 96.2
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "random, 2x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.7,
+    "sd": 0.5,
+    "ci95": [
+     64.3,
+     65.1
+    ],
+    "worst": 64.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.8,
+    "sd": 1.0,
+    "ci95": [
+     97.9,
+     99.6
+    ],
+    "worst": 96.3
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "random, 4 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.7,
+    "sd": 0.5,
+    "ci95": [
+     64.3,
+     65.1
+    ],
+    "worst": 64.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.7,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.5
+    ],
+    "worst": 96.2
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "random, 8 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.1,
+    "sd": 0.1,
+    "ci95": [
+     64.0,
+     64.2
+    ],
+    "worst": 64.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 97.7,
+    "sd": 1.7,
+    "ci95": [
+     96.2,
+     99.2
+    ],
+    "worst": 95.2
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "random, no background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 64.7,
+    "sd": 0.5,
+    "ci95": [
+     64.3,
+     65.1
+    ],
+    "worst": 64.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.7,
+    "sd": 1.0,
+    "ci95": [
+     97.8,
+     99.5
+    ],
+    "worst": 96.2
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "random, with background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 62.8,
+    "sd": 0.8,
+    "ci95": [
+     62.1,
+     63.5
+    ],
+    "worst": 61.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 97.4,
+    "sd": 3.7,
+    "ci95": [
+     94.1,
+     100.0
+    ],
+    "worst": 88.4
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "sweep, 30 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 72.7,
+    "sd": 1.1,
+    "ci95": [
+     71.7,
+     73.7
+    ],
+    "worst": 71.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.6,
+    "sd": 0.1,
+    "ci95": [
+     99.5,
+     99.7
+    ],
+    "worst": 99.3
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "sweep, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 10.5,
+    "sd": 0.2,
+    "ci95": [
+     10.3,
+     10.7
+    ],
+    "worst": 10.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 84.8,
+    "sd": 1.5,
+    "ci95": [
+     83.5,
+     86.1
+    ],
+    "worst": 83.1
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "sweep, 46 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 2.0,
+    "sd": 0.1,
+    "ci95": [
+     1.9,
+     2.1
+    ],
+    "worst": 1.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 50.7,
+    "sd": 5.1,
+    "ci95": [
+     46.3,
+     55.1
+    ],
+    "worst": 46.4
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "sweep, close",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 5.6,
+    "sd": 0.5,
+    "ci95": [
+     5.2,
+     6.0
+    ],
+    "worst": 5.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 83.9,
+    "sd": 1.6,
+    "ci95": [
+     82.5,
+     85.3
+    ],
+    "worst": 82.3
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "sweep, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 10.5,
+    "sd": 0.2,
+    "ci95": [
+     10.3,
+     10.7
+    ],
+    "worst": 10.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 84.8,
+    "sd": 1.5,
+    "ci95": [
+     83.5,
+     86.1
+    ],
+    "worst": 83.1
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "sweep, far (800, 650)",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 40.0,
+    "sd": 0.6,
+    "ci95": [
+     39.5,
+     40.5
+    ],
+    "worst": 39.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 87.5,
+    "sd": 1.3,
+    "ci95": [
+     86.5,
+     88.6
+    ],
+    "worst": 86.2
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "sweep, 0.5x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 8.9,
+    "sd": 0.3,
+    "ci95": [
+     8.7,
+     9.2
+    ],
+    "worst": 8.3
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 85.1,
+    "sd": 1.6,
+    "ci95": [
+     83.7,
+     86.5
+    ],
+    "worst": 83.3
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "sweep, 1x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 10.5,
+    "sd": 0.2,
+    "ci95": [
+     10.3,
+     10.7
+    ],
+    "worst": 10.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 84.8,
+    "sd": 1.5,
+    "ci95": [
+     83.5,
+     86.1
+    ],
+    "worst": 83.1
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "sweep, 2x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 11.0,
+    "sd": 0.4,
+    "ci95": [
+     10.6,
+     11.3
+    ],
+    "worst": 10.4
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 82.8,
+    "sd": 1.7,
+    "ci95": [
+     81.3,
+     84.3
+    ],
+    "worst": 80.6
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "sweep, 4 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 10.5,
+    "sd": 0.2,
+    "ci95": [
+     10.3,
+     10.7
+    ],
+    "worst": 10.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 84.8,
+    "sd": 1.5,
+    "ci95": [
+     83.5,
+     86.1
+    ],
+    "worst": 83.1
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "sweep, 8 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 8.9,
+    "sd": 0.2,
+    "ci95": [
+     8.7,
+     9.0
+    ],
+    "worst": 8.4
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 83.9,
+    "sd": 0.8,
+    "ci95": [
+     83.2,
+     84.5
+    ],
+    "worst": 83.0
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "sweep, no background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 10.5,
+    "sd": 0.2,
+    "ci95": [
+     10.3,
+     10.7
+    ],
+    "worst": 10.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 84.8,
+    "sd": 1.5,
+    "ci95": [
+     83.5,
+     86.1
+    ],
+    "worst": 83.1
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "sweep, with background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 10.3,
+    "sd": 0.6,
+    "ci95": [
+     9.8,
+     10.9
+    ],
+    "worst": 9.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 83.5,
+    "sd": 2.0,
+    "ci95": [
+     81.8,
+     85.1
+    ],
+    "worst": 80.5
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "follower, 30 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 12.0,
+    "sd": 0.5,
+    "ci95": [
+     11.6,
+     12.4
+    ],
+    "worst": 11.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "follower, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.9,
+    "sd": 0.2,
+    "ci95": [
+     4.7,
+     5.1
+    ],
+    "worst": 4.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "follower, 46 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 2.1,
+    "sd": 0.0,
+    "ci95": [
+     2.1,
+     2.1
+    ],
+    "worst": 2.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.6,
+    "sd": 0.0,
+    "ci95": [
+     99.6,
+     99.7
+    ],
+    "worst": 99.6
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "follower, close",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 3.8,
+    "sd": 0.2,
+    "ci95": [
+     3.7,
+     4.0
+    ],
+    "worst": 3.5
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "follower, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.9,
+    "sd": 0.2,
+    "ci95": [
+     4.7,
+     5.1
+    ],
+    "worst": 4.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "follower, far (800, 650)",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 34.4,
+    "sd": 0.5,
+    "ci95": [
+     34.0,
+     34.8
+    ],
+    "worst": 33.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.1,
+    "ci95": [
+     99.7,
+     99.8
+    ],
+    "worst": 99.6
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "follower, 0.5x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.3,
+    "sd": 0.2,
+    "ci95": [
+     4.1,
+     4.4
+    ],
+    "worst": 4.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "follower, 1x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.9,
+    "sd": 0.2,
+    "ci95": [
+     4.7,
+     5.1
+    ],
+    "worst": 4.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "follower, 2x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 5.1,
+    "sd": 0.2,
+    "ci95": [
+     4.9,
+     5.3
+    ],
+    "worst": 4.7
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "follower, 4 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.9,
+    "sd": 0.2,
+    "ci95": [
+     4.7,
+     5.1
+    ],
+    "worst": 4.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "follower, 8 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.2,
+    "sd": 0.1,
+    "ci95": [
+     4.1,
+     4.3
+    ],
+    "worst": 4.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.6,
+    "sd": 0.0,
+    "ci95": [
+     99.6,
+     99.7
+    ],
+    "worst": 99.6
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "follower, no background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.9,
+    "sd": 0.2,
+    "ci95": [
+     4.7,
+     5.1
+    ],
+    "worst": 4.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 99.7,
+    "sd": 0.0,
+    "ci95": [
+     99.7,
+     99.7
+    ],
+    "worst": 99.7
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "follower, with background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 4.8,
+    "sd": 0.4,
+    "ci95": [
+     4.5,
+     5.1
+    ],
+    "worst": 4.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 98.3,
+    "sd": 0.5,
+    "ci95": [
+     97.9,
+     98.7
+    ],
+    "worst": 97.5
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "smart, 30 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 39.8,
+    "sd": 0.4,
+    "ci95": [
+     39.4,
+     40.2
+    ],
+    "worst": 39.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 93.3,
+    "sd": 2.7,
+    "ci95": [
+     90.9,
+     95.6
+    ],
+    "worst": 88.9
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "smart, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.4,
+    "sd": 0.2,
+    "ci95": [
+     33.2,
+     33.5
+    ],
+    "worst": 33.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.8,
+    "sd": 0.8,
+    "ci95": [
+     91.1,
+     92.5
+    ],
+    "worst": 90.5
+   }
+  },
+  {
+   "group": "jammer power",
+   "condition": "smart, 46 dBm",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 32.2,
+    "sd": 0.0,
+    "ci95": [
+     32.2,
+     32.2
+    ],
+    "worst": 32.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 87.5,
+    "sd": 0.7,
+    "ci95": [
+     86.9,
+     88.2
+    ],
+    "worst": 86.6
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "smart, close",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 32.8,
+    "sd": 0.0,
+    "ci95": [
+     32.8,
+     32.8
+    ],
+    "worst": 32.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.7,
+    "sd": 0.9,
+    "ci95": [
+     90.9,
+     92.5
+    ],
+    "worst": 90.4
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "smart, default",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.4,
+    "sd": 0.2,
+    "ci95": [
+     33.2,
+     33.5
+    ],
+    "worst": 33.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.8,
+    "sd": 0.8,
+    "ci95": [
+     91.1,
+     92.5
+    ],
+    "worst": 90.5
+   }
+  },
+  {
+   "group": "jammer distance",
+   "condition": "smart, far (800, 650)",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 51.9,
+    "sd": 0.4,
+    "ci95": [
+     51.5,
+     52.2
+    ],
+    "worst": 51.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 93.5,
+    "sd": 1.5,
+    "ci95": [
+     92.1,
+     94.8
+    ],
+    "worst": 91.1
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "smart, 0.5x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.0,
+    "sd": 0.1,
+    "ci95": [
+     32.9,
+     33.1
+    ],
+    "worst": 32.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.9,
+    "sd": 1.0,
+    "ci95": [
+     91.0,
+     92.8
+    ],
+    "worst": 90.4
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "smart, 1x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.4,
+    "sd": 0.2,
+    "ci95": [
+     33.2,
+     33.5
+    ],
+    "worst": 33.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.8,
+    "sd": 0.8,
+    "ci95": [
+     91.1,
+     92.5
+    ],
+    "worst": 90.5
+   }
+  },
+  {
+   "group": "drone speed",
+   "condition": "smart, 2x",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.4,
+    "sd": 0.2,
+    "ci95": [
+     33.3,
+     33.6
+    ],
+    "worst": 33.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.2,
+    "sd": 1.6,
+    "ci95": [
+     89.7,
+     92.6
+    ],
+    "worst": 88.4
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "smart, 4 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.4,
+    "sd": 0.2,
+    "ci95": [
+     33.2,
+     33.5
+    ],
+    "worst": 33.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.8,
+    "sd": 0.8,
+    "ci95": [
+     91.1,
+     92.5
+    ],
+    "worst": 90.5
+   }
+  },
+  {
+   "group": "network size",
+   "condition": "smart, 8 drones",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.0,
+    "sd": 0.1,
+    "ci95": [
+     32.9,
+     33.1
+    ],
+    "worst": 32.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.0,
+    "sd": 1.4,
+    "ci95": [
+     89.8,
+     92.2
+    ],
+    "worst": 88.9
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "smart, no background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 33.4,
+    "sd": 0.2,
+    "ci95": [
+     33.2,
+     33.5
+    ],
+    "worst": 33.1
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 91.8,
+    "sd": 0.8,
+    "ci95": [
+     91.1,
+     92.5
+    ],
+    "worst": 90.5
+   }
+  },
+  {
+   "group": "background interference",
+   "condition": "smart, with background",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 32.5,
+    "sd": 0.4,
+    "ci95": [
+     32.1,
+     32.8
+    ],
+    "worst": 32.0
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 92.0,
+    "sd": 0.9,
+    "ci95": [
+     91.2,
+     92.8
+    ],
+    "worst": 90.7
+   }
+  },
+  {
+   "group": "stacked",
+   "condition": "sweep + follower",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 2.4,
+    "sd": 0.1,
+    "ci95": [
+     2.3,
+     2.4
+    ],
+    "worst": 2.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 74.1,
+    "sd": 4.5,
+    "ci95": [
+     70.3,
+     78.0
+    ],
+    "worst": 66.7
+   }
+  },
+  {
+   "group": "stacked",
+   "condition": "sweep + follower + smart",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 1.1,
+    "sd": 0.1,
+    "ci95": [
+     1.0,
+     1.2
+    ],
+    "worst": 0.9
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 71.8,
+    "sd": 2.9,
+    "ci95": [
+     69.4,
+     74.3
+    ],
+    "worst": 67.2
+   }
+  },
+  {
+   "group": "stacked",
+   "condition": "random + follower",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 3.8,
+    "sd": 0.2,
+    "ci95": [
+     3.7,
+     4.0
+    ],
+    "worst": 3.6
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 61.0,
+    "sd": 9.8,
+    "ci95": [
+     52.5,
+     69.6
+    ],
+    "worst": 52.5
+   }
+  },
+  {
+   "group": "stacked",
+   "condition": "barrage + follower",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 3.6,
+    "sd": 0.2,
+    "ci95": [
+     3.5,
+     3.8
+    ],
+    "worst": 3.3
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 88.6,
+    "sd": 4.3,
+    "ci95": [
+     84.8,
+     92.3
+    ],
+    "worst": 84.2
+   }
+  },
+  {
+   "group": "unseen",
+   "condition": "novel",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 15.2,
+    "sd": 0.3,
+    "ci95": [
+     15.0,
+     15.5
+    ],
+    "worst": 14.8
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 83.9,
+    "sd": 1.1,
+    "ci95": [
+     82.9,
+     84.9
+    ],
+    "worst": 82.8
+   }
+  },
+  {
+   "group": "unseen",
+   "condition": "novel_staircase",
+   "fixed_hopping": {
+    "n": 8,
+    "mean": 9.5,
+    "sd": 0.2,
+    "ci95": [
+     9.3,
+     9.7
+    ],
+    "worst": 9.2
+   },
+   "hybrid": {
+    "n": 8,
+    "mean": 77.8,
+    "sd": 1.8,
+    "ci95": [
+     76.2,
+     79.3
+    ],
+    "worst": 75.5
+   }
+  }
+ ],
+ "overall": {
+  "ai_on": {
+   "n": 568,
+   "mean": 91.7,
+   "sd": 9.8,
+   "ci95": [
+    90.9,
+    92.5
+   ],
+   "worst": 46.4
+  },
+  "ai_off": {
+   "n": 568,
+   "mean": 28.5,
+   "sd": 24.0,
+   "ci95": [
+    26.5,
+    30.5
+   ],
+   "worst": 0.9
+  }
+ },
+ "latency_ms": {
+  "n": 4170,
+  "p50": 30.0,
+  "p95": 170.0,
+  "p99": 506.2,
+  "max": 2780.0
+ },
+ "latency_by_group": {
+  "background interference": {
+   "n": 543,
+   "p50": 20.0,
+   "p95": 110.0,
+   "p99": 220.0
+  },
+  "drone speed": {
+   "n": 837,
+   "p50": 30.0,
+   "p95": 100.0,
+   "p99": 180.0
+  },
+  "jammer distance": {
+   "n": 749,
+   "p50": 20.0,
+   "p95": 116.0,
+   "p99": 285.2
+  },
+  "jammer power": {
+   "n": 740,
+   "p50": 30.0,
+   "p95": 250.0,
+   "p99": 942.0
+  },
+  "network size": {
+   "n": 564,
+   "p50": 30.0,
+   "p95": 110.0,
+   "p99": 213.3
+  },
+  "stacked": {
+   "n": 325,
+   "p50": 80.0,
+   "p95": 660.0,
+   "p99": 1520.0
+  },
+  "unseen": {
+   "n": 412,
+   "p50": 30.0,
+   "p95": 94.5,
+   "p99": 120.0
+  }
+ },
+ "response_latency_ms": {
+  "n": 5495,
+  "p50": 30.0,
+  "p95": 150.0,
+  "p99": 550.0
+ },
+ "latency_single_jammer": {
+  "n": 3166,
+  "p50": 30.0,
+  "p95": 120.0,
+  "p99": 300.0
+ }
+}
