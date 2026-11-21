@@ -74,9 +74,14 @@ def rician_gain_db(rng: np.random.Generator, k_db: np.ndarray | float, size) -> 
     return 10 * np.log10(np.maximum(np.abs(h) ** 2, 1e-6))
 
 
+MOD_EBN0_DB = {"QPSK": -3.0, "BPSK": 0.0, "BPSK_R2": 3.0}
+MOD_RATE = {"QPSK": 1.0, "BPSK": 0.5, "BPSK_R2": 0.25}     # data rate relative to QPSK
+
+
 def ber(sinr_db: np.ndarray, modulation: str) -> np.ndarray:
-    """Coded bit error rate. QPSK: Eb/N0 = SINR - 3 dB. BPSK at half the bit rate: Eb/N0 = SINR."""
-    eb_n0_db = np.asarray(sinr_db, dtype=float) + CODING_GAIN_DB - (3.0 if modulation == "QPSK" else 0.0)
+    """Coded bit error rate. QPSK: Eb/N0 = SINR - 3 dB. BPSK at half the bit rate: Eb/N0 = SINR.
+    BPSK_R2 (survival mode): BPSK with every bit sent twice, a quarter of the QPSK rate: Eb/N0 = SINR + 3 dB."""
+    eb_n0_db = np.asarray(sinr_db, dtype=float) + CODING_GAIN_DB + MOD_EBN0_DB.get(modulation, 0.0)
     g = 10 ** (eb_n0_db / 10)
     return 0.5 * erfc(np.sqrt(g))
 
@@ -114,6 +119,32 @@ def segment_hits_box(p0: np.ndarray, p1: np.ndarray, center_xy, size_xyz) -> boo
         if t0 > t1:
             return False
     return True
+
+
+def obstacle_loss_many(p0, p1, obstacles) -> np.ndarray:
+    """Vectorised obstacle_loss_db for M segments p0[m] -> p1[m] at once (same slab method, same result)."""
+    p0, p1 = np.asarray(p0, float).reshape(-1, 3), np.asarray(p1, float).reshape(-1, 3)
+    if not obstacles or len(p0) == 0:
+        return np.zeros(len(p0))
+    c = np.array([[o["pos"][0], o["pos"][1]] for o in obstacles], float)
+    sz = np.array([o["size"] for o in obstacles], float)
+    lo = np.column_stack([c[:, 0] - sz[:, 0] / 2, c[:, 1] - sz[:, 1] / 2, np.zeros(len(c))])
+    hi = np.column_stack([c[:, 0] + sz[:, 0] / 2, c[:, 1] + sz[:, 1] / 2, sz[:, 2]])
+    loss = np.array([o["loss_db"] for o in obstacles], float)
+    d = p1 - p0
+    t0 = np.zeros((len(p0), len(c)))
+    t1 = np.ones_like(t0)
+    hit = np.ones_like(t0, dtype=bool)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        for a in range(3):
+            da, pa = d[:, a:a + 1], p0[:, a:a + 1]
+            small = np.abs(da) < 1e-9
+            hit &= np.where(small, (pa >= lo[None, :, a]) & (pa <= hi[None, :, a]), True)
+            ta, tb = (lo[None, :, a] - pa) / da, (hi[None, :, a] - pa) / da
+            t0 = np.where(small, t0, np.maximum(t0, np.minimum(ta, tb)))
+            t1 = np.where(small, t1, np.minimum(t1, np.maximum(ta, tb)))
+    hit &= t0 <= t1
+    return (hit * loss[None, :]).sum(axis=1)
 
 
 def obstacle_loss_db(p0, p1, obstacles) -> float:

@@ -10,9 +10,11 @@ import numpy as np
 
 from .radio import (
     BUILDING_LOSS_DB, HILL_LOSS_DB, N_CH, NOISE_INBAND_DBM, PL_EXPONENT_AIR, PL_EXPONENT_GROUND, RICIAN_K_DB_AIR,
-    RICIAN_K_DB_GROUND, TX_POWER_DBM, dbm_to_mw, mw_to_dbm, obstacle_loss_db, packet_delivery, path_loss_db,
+    RICIAN_K_DB_GROUND, TX_POWER_DBM, dbm_to_mw, mw_to_dbm, obstacle_loss_db, obstacle_loss_many, packet_delivery, path_loss_db,
     rician_gain_db,
 )
+
+from .trips import Trip
 
 ROUTE_HYSTERESIS_DB = 3.0
 SINR_EMA = 0.15                 # per-slot smoothing of link quality used for routing and colours
@@ -24,6 +26,13 @@ ARENA_OBSTACLES = [
     {"id": "B3", "kind": "building", "pos": [120.0, 560.0], "size": [50.0, 80.0, 28.0], "loss_db": BUILDING_LOSS_DB},
     {"id": "H1", "kind": "hill", "pos": [950.0, 430.0], "size": [220.0, 180.0, 70.0], "loss_db": HILL_LOSS_DB},
 ]
+
+
+# arena convoy roads (the viewer draws the same polylines); both keep clear of buildings and the hill
+ARENA_ROUTES = {
+    "V1": [(-150, -250), (150, -285), (450, -235), (760, -265), (980, -200)],
+    "V2": [(60, 760), (320, 720), (600, 660), (820, 620), (1120, 580), (1170, 380), (1080, 140)],
+}
 
 
 def _pingpong(s: float, length: float) -> float:
@@ -70,14 +79,20 @@ class Node:
             self.heading = h
 
 
-def arena_nodes() -> list[Node]:
+# convoy truck cruise speeds (m/s). The benchmark, robustness sweep and experiments keep the speeds their published
+# numbers were measured at; the live arena on screen drives faster so the trucks visibly move on a 1.3 km map.
+BENCH_TRUCK_SPEEDS = (9.0, 7.0)
+LIVE_TRUCK_SPEEDS = (20.0, 16.0)
+
+
+def arena_nodes(truck_speeds: tuple[float, float] = BENCH_TRUCK_SPEEDS) -> list[Node]:
     nodes = [Node("CP", "command_post", pos=np.array([0.0, 0.0, 6.0]))]
     nodes.append(Node("D1", "drone", drone_path(250, 150, 260, 170, 0.045, 0.0, 95)))
     nodes.append(Node("D2", "drone", drone_path(520, 420, 300, 220, -0.035, 1.2, 110)))
     nodes.append(Node("D3", "drone", drone_path(820, 150, 230, 260, 0.04, 2.6, 100)))
     nodes.append(Node("D4", "drone", drone_path(420, -150, 340, 140, -0.05, 4.0, 85)))
-    nodes.append(Node("V1", "vehicle", road_path((-150, -250), (950, -250), 9.0, 0.0)))
-    nodes.append(Node("V2", "vehicle", road_path((60, 760), (1080, 140), 7.0, 300.0)))
+    nodes.append(Node("V1", "vehicle", Trip(ARENA_ROUTES["V1"], "Forward base", "Supply depot", truck_speeds[0])))
+    nodes.append(Node("V2", "vehicle", Trip(ARENA_ROUTES["V2"], "Field hospital", "Radar site", truck_speeds[1], offset_s=40.0)))
     for n in nodes:
         n.move(0.0)
     return nodes
@@ -128,18 +143,19 @@ class Network:
         d = np.linalg.norm(P[self.pa] - P[self.pb], axis=1)
         air = np.array([self.nodes[i].kind in AIRBORNE or self.nodes[j].kind in AIRBORNE for i, j in self.pairs])
         self.link_k_db = np.where(air, RICIAN_K_DB_AIR, RICIAN_K_DB_GROUND)
-        obst = np.array([obstacle_loss_db(P[i], P[j], self.obstacles) for i, j in self.pairs])
+        obst = obstacle_loss_many(P[self.pa], P[self.pb], self.obstacles)
         self.link_obst = obst
         self.link_loss_db = path_loss_db(d, np.where(air, PL_EXPONENT_AIR, PL_EXPONENT_GROUND)) + obst
         self.link_dist = d
         # jammer -> node path gain (dB, negative), without fading
         self.jam_gain_db = np.zeros((len(jammers), len(self.nodes)))
-        for a, jm in enumerate(jammers):
-            jp = np.array(jm.pos)
-            dj = np.linalg.norm(P - jp, axis=1)
+        if jammers:
+            nn = len(self.nodes)
+            J = np.array([jm.pos for jm in jammers], float)
             exps = np.array([PL_EXPONENT_AIR if nd.kind in AIRBORNE else PL_EXPONENT_GROUND for nd in self.nodes])
-            ob = np.array([obstacle_loss_db(jp, P[i], self.obstacles) for i in range(len(self.nodes))])
-            self.jam_gain_db[a] = -(path_loss_db(dj, exps) + ob)
+            dj = np.linalg.norm(P[None, :, :] - J[:, None, :], axis=2)                       # (jammers, nodes)
+            ob = obstacle_loss_many(np.repeat(J, nn, axis=0), np.tile(P, (len(J), 1)), self.obstacles).reshape(len(J), nn)
+            self.jam_gain_db = -(path_loss_db(dj, exps[None, :]) + ob)
 
     # ---------- per slot ----------
     def interference_mw(self, jammers, channel: int, rng: np.random.Generator) -> np.ndarray:
@@ -169,6 +185,15 @@ class Network:
             e = e + dbm_to_mw(jm.power_dbm + self.jam_gain_db[a, node_idx]) * jm.frac
         return mw_to_dbm(e)
 
+    def fused_energy_dbm(self, jammers) -> np.ndarray:
+        """Distributed spectrum sensing: every node measures in-band energy on all 8 channels and reports
+        it in its (encrypted) telemetry; the command post keeps the worst case per channel. A jammer that
+        the command post itself cannot see (behind buildings) still shows up."""
+        e = np.full((len(self.nodes), N_CH), dbm_to_mw(NOISE_INBAND_DBM))
+        for a, jm in enumerate(jammers):
+            e += dbm_to_mw(jm.power_dbm + self.jam_gain_db[a])[:, None] * jm.frac[None, :]
+        return mw_to_dbm(e.max(axis=0))
+
     def slot(self, jammers, channel: int, rng_fade: np.random.Generator, rng_pkt: np.random.Generator):
         """Returns (sinr_db per pair, success per pair, interference_mw per node)."""
         n_links = len(self.pairs)
@@ -190,6 +215,8 @@ class Network:
         q = {}
         for k, (i, j) in enumerate(self.pairs):
             q[(i, j)] = q[(j, i)] = self.sinr_ema[k]
+        from .battery import relay_penalty_db
+        relay_pen = [relay_penalty_db(nd) for nd in self.nodes]
         best = np.full(n, -np.inf)
         best[self.cp] = np.inf
         parent = [-1] * n
@@ -203,7 +230,9 @@ class Network:
             for v in range(n):
                 if v == u or v in done:
                     continue
-                w = min(best[u], q[(u, v)])
+                # passing through a drone that is low on battery (or flying home) costs extra: see battery.relay_penalty_db
+                pen = 0.0 if u == self.cp else relay_pen[u]
+                w = min(best[u], q[(u, v)] - pen)
                 if w > best[v]:
                     best[v] = w
                     parent[v] = u
