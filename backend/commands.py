@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
 from .protocol import ARENA_BOUNDS, STUDIO_BOUNDS
 
-JammerType = Literal["barrage", "random", "sweep", "reactive", "deceptive", "accidental", "follower", "smart"]
+JammerType = Literal["barrage", "random", "sweep", "reactive", "deceptive", "accidental", "follower", "smart", "novel"]
 
 
 class _Cmd(BaseModel):
@@ -54,16 +54,19 @@ class RunBenchmark(_Cmd):
     action: Literal["run_benchmark"]
     seed: Optional[int] = None
     duration_s: Optional[float] = Field(default=None, gt=0, le=120)
+    seeds: Optional[int] = Field(default=None, ge=1, le=10)
+    quick: Optional[bool] = None
 
 
 class SecurityTest(_Cmd):
     action: Literal["security_test"]
-    test: Literal["tamper", "spoof", "replay", "eavesdrop"]
+    test: Literal["legit", "tamper", "spoof", "replay", "eavesdrop", "desync", "impersonate", "capture", "reboot", "clock_loss"]
 
 
 class LoadScenario(_Cmd):
     action: Literal["load_scenario"]
-    name: Literal["border_convoy", "disaster_zone", "drone_delivery"]
+    name: Literal["border_convoy", "urban_patrol", "coastal_watch", "forest_ambush", "airbase_spoof", "relief_camp",
+                  "drone_delivery"]
 
 
 class ExitScenario(_Cmd):
@@ -80,7 +83,13 @@ class Pause(_Cmd):
 
 class SetSpeed(_Cmd):
     action: Literal["set_speed"]
-    speed: Literal[1, 2, 4]
+    speed: Literal[1, 2, 4, 10]
+
+
+class Replay(_Cmd):
+    """Feed the CNN panel from a recorded spectrum file in recordings/ instead of the simulator; name=None stops."""
+    action: Literal["replay"]
+    name: Optional[Annotated[str, Field(max_length=80, pattern=r"^[A-Za-z0-9_.-]+$")]] = None
 
 
 class Restart(_Cmd):
@@ -89,7 +98,7 @@ class Restart(_Cmd):
 
 Command = Annotated[
     Union[LaunchJammer, ClearJammers, ToggleAI, SetView, RunBenchmark, SecurityTest,
-          LoadScenario, ExitScenario, Play, Pause, SetSpeed, Restart],
+          LoadScenario, ExitScenario, Play, Pause, SetSpeed, Restart, Replay],
     Field(discriminator="action"),
 ]
 

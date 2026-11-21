@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AEGIS-LINK · debug console</title>
+<title>ABHEDYA · debug console</title>
 <style>
-  :root { --bg:#0e1116; --panel:#161b22; --line:#2a313c; --text:#d8dee9; --mute:#8b95a5;
-          --ok:#3fb950; --deg:#d29922; --down:#f85149; --accent:#58a6ff; }
+  :root { --bg:#1a1a2e; --panel:#2b2d42; --line:#3b3e58; --text:#ffffff; --mute:#8d99ae;
+          --ok:#3fb950; --deg:#d29922; --down:#f85149; --accent:#c9d1de; }
   * { box-sizing:border-box; }
   body { margin:0; font:13px/1.4 system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
   header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
@@ -16,15 +16,15 @@
   main { display:grid; grid-template-columns: minmax(320px,1fr) 360px; gap:12px; padding:12px; }
   section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px; }
   h2 { font-size:12px; text-transform:uppercase; color:var(--mute); margin:0 0 8px; letter-spacing:.8px; }
-  canvas { width:100%; background:#0b0e13; border-radius:6px; display:block; cursor:crosshair; }
+  canvas { width:100%; background:#1a1a2e; border-radius:6px; display:block; cursor:crosshair; }
   .kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
-  .kpi { background:#0b0e13; border-radius:6px; padding:6px; } .kpi b { display:block; font-size:16px; }
+  .kpi { background:#1a1a2e; border-radius:6px; padding:6px; } .kpi b { display:block; font-size:16px; }
   .kpi span { color:var(--mute); font-size:11px; }
-  button, select { background:#21262d; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 9px; cursor:pointer; }
+  button, select { background:#33354d; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 9px; cursor:pointer; }
   button:hover { border-color:var(--accent); }
   .row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
   #log { height:220px; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px; }
-  #log div { padding:2px 0; border-bottom:1px solid #1c2128; }
+  #log div { padding:2px 0; border-bottom:1px solid #2b2d42; }
   .alert { color:var(--down); } .warn { color:var(--deg); } .good { color:var(--ok); } .info { color:var(--text); } .err { color:#ff7b72; }
   #rates { font-family:ui-monospace,Consolas,monospace; color:var(--mute); }
   .worlds { display:grid; gap:8px; }
@@ -34,12 +34,12 @@
 </head>
 <body>
 <header>
-  <h1>AEGIS-LINK · debug console</h1>
+  <h1>ABHEDYA · debug console</h1>
   <span id="conn" class="pill off">disconnected</span>
   <span id="src" class="pill">—</span>
   <span id="ai" class="pill">AI —</span>
   <span id="rates"></span>
-  <a href="/viewer/" style="margin-left:auto;color:#58a6ff">open the 3D view ↗</a>
+  <a href="/viewer/" style="margin-left:auto;color:#c9d1de">open the 3D view ↗</a>
 </header>
 <main>
   <div>
@@ -61,6 +61,7 @@
         <button data-cmd='{"action":"set_view","view":"side_by_side"}'>Side by side</button>
       </div>
       <div class="row">
+        <button data-cmd='{"action":"security_test","test":"legit"}'>Show packet</button>
         <button data-cmd='{"action":"security_test","test":"tamper"}'>Tamper</button>
         <button data-cmd='{"action":"security_test","test":"spoof"}'>Spoof</button>
         <button data-cmd='{"action":"security_test","test":"replay"}'>Replay</button>
@@ -109,7 +110,7 @@
   function ensureWorld(id) {
     if (worlds[id]) return worlds[id];
     const wrap = document.createElement('div');
-    const title = id === 'ai_off' ? 'AI OFF · conventional fixed hopping' : id === 'ai_on' ? 'AI ON · AEGIS-LINK' : 'live world';
+    const title = id === 'ai_off' ? 'AI OFF · conventional fixed hopping' : id === 'ai_on' ? 'AI ON · ABHEDYA' : 'live world';
     wrap.innerHTML = `<div class="wlabel">${title}</div><canvas width="600" height="500"></canvas>
       <canvas width="600" height="90" style="margin-top:6px"></canvas>
       <canvas width="600" height="110" style="margin-top:4px"></canvas>
@@ -159,15 +160,15 @@
   function drawMap(w) {
     const c = w.map, g = c.getContext('2d'), s = w.state; if (!s) return;
     g.clearRect(0, 0, c.width, c.height);
-    g.strokeStyle = '#1c2128'; g.lineWidth = 1;
+    g.strokeStyle = '#2b2d42'; g.lineWidth = 1;
     for (let x = Math.ceil(B.x[0]/100)*100; x <= B.x[1]; x += 100) { g.beginPath(); g.moveTo(sx(c,x),0); g.lineTo(sx(c,x),c.height); g.stroke(); }
     for (let y = Math.ceil(B.y[0]/100)*100; y <= B.y[1]; y += 100) { g.beginPath(); g.moveTo(0,sy(c,y)); g.lineTo(c.width,sy(c,y)); g.stroke(); }
     for (const o of (s.obstacles || [])) {
       const x0 = sx(c, o.pos[0] - o.size[0]/2), x1 = sx(c, o.pos[0] + o.size[0]/2);
       const y0 = sy(c, o.pos[1] + o.size[1]/2), y1 = sy(c, o.pos[1] - o.size[1]/2);
-      g.fillStyle = o.kind === 'hill' ? 'rgba(110,90,60,.35)' : 'rgba(140,150,170,.35)';
+      g.fillStyle = o.kind === 'hill' ? 'rgba(110,90,60,.35)' : 'rgba(141,153,174,.35)';
       g.fillRect(x0, y0, x1 - x0, y1 - y0);
-      g.fillStyle = '#8b95a5'; g.fillText(`${o.id} ${o.size[2]}m`, x0 + 2, y0 + 11);
+      g.fillStyle = '#8d99ae'; g.fillText(`${o.id} ${o.size[2]}m`, x0 + 2, y0 + 11);
     }
     const pos = Object.fromEntries(s.nodes.map(n => [n.id, n.pos]));
     for (const l of s.links) {
@@ -180,7 +181,7 @@
       const x = sx(c,j.pos[0]), y = sy(c,j.pos[1]);
       g.fillStyle = 'rgba(248,81,73,.18)'; g.beginPath(); g.arc(x, y, 40, 0, 7); g.fill();
       g.fillStyle = '#f85149'; g.fillRect(x-5, y-5, 10, 10);
-      g.fillStyle = '#d8dee9'; g.fillText(`${j.id} ${j.type}`, x+8, y-8);
+      g.fillStyle = '#ffffff'; g.fillText(`${j.id} ${j.type}`, x+8, y-8);
     }
     for (const e of (s.estimates || [])) {
       const r = e.radius_m / (B.x[1] - B.x[0]) * c.width;
@@ -190,15 +191,15 @@
     }
     for (const n of s.nodes) {
       const x = sx(c,n.pos[0]), y = sy(c,n.pos[1]);
-      g.fillStyle = n.kind === 'command_post' ? '#58a6ff' : n.kind === 'drone' ? '#a5d6ff' : '#c9d1d9';
+      g.fillStyle = n.kind === 'command_post' ? '#c9d1de' : n.kind === 'drone' ? '#d5dae3' : '#eef0f4';
       g.beginPath();
       if (n.kind === 'drone') { g.moveTo(x, y-7); g.lineTo(x+6, y+5); g.lineTo(x-6, y+5); } else g.rect(x-6, y-6, 12, 12);
-      g.fill(); g.fillStyle = '#8b95a5'; g.fillText(`${n.id} ch${n.channel}`, x+8, y+4);
+      g.fill(); g.fillStyle = '#8d99ae'; g.fillText(`${n.id} ch${n.channel}`, x+8, y+4);
     }
     const k = s.kpis;
-    g.fillStyle = '#d8dee9'; g.font = '12px system-ui';
+    g.fillStyle = '#ffffff'; g.font = '12px system-ui';
     g.fillText(`t=${s.sim_time_s.toFixed(1)}s  delivery ${k.delivery_pct}%  hops ${k.hops}  ${s.paused ? 'PAUSED' : s.speed + 'x'}`, 8, 16);
-    g.fillStyle = '#8b95a5';
+    g.fillStyle = '#8d99ae';
     g.fillText(`defender: ${s.defender || '—'} · mode: ${s.hop_mode || '—'} · ${s.nodes[0]?.modulation || ''} +${((s.nodes[0]?.tx_power_dbm || 27) - 27).toFixed(0)} dB` +
                (s.blacklist?.length ? ` · blacklist ${s.blacklist.join(',')}` : ''), 8, 32);
   }
@@ -209,14 +210,14 @@
     const lo = -110, hi = -20, bw = c.width / m.bins.length;
     m.bins.forEach((p, i) => {
       const h = Math.max(0, (p - lo) / (hi - lo)) * (c.height - 18);
-      g.fillStyle = p > -80 ? '#f85149' : p > -90 ? '#d29922' : '#3b82f6';
+      g.fillStyle = p > -80 ? '#f85149' : p > -90 ? '#d29922' : '#8d99ae';
       g.fillRect(i * bw, c.height - h, bw - 0.5, h);
     });
-    g.fillStyle = '#8b95a5'; g.font = '11px system-ui';
+    g.fillStyle = '#8d99ae'; g.font = '11px system-ui';
     const cur = w.state?.nodes?.[0]?.channel;
-    for (let ch = 0; ch < 8; ch++) { g.fillStyle = ch === cur ? '#58a6ff' : '#8b95a5'; g.fillText('ch' + ch + (ch === cur ? ' ◀ us' : ''), ch * c.width / 8 + 4, 12); }
-    g.fillStyle = '#d8dee9';
-    g.fillStyle = '#d8dee9';
+    for (let ch = 0; ch < 8; ch++) { g.fillStyle = ch === cur ? '#c9d1de' : '#8d99ae'; g.fillText('ch' + ch + (ch === cur ? ' ◀ us' : ''), ch * c.width / 8 + 4, 12); }
+    g.fillStyle = '#ffffff';
+    g.fillStyle = '#ffffff';
     if (m.verdict) g.fillText(`CNN: ${m.verdict} ${(m.confidence*100).toFixed(0)}%${m.gradcam ? ' · grad-cam' : ''}`, 4, 28);
   }
 
@@ -232,30 +233,30 @@
     g.drawImage(c, 0, 0, c.width, c.height - 14, 0, 1, c.width, c.height - 14);   // scroll down 1 px
     const bw = c.width / bins.length;
     bins.forEach((p, i) => { g.fillStyle = heat((p + 112) / 55); g.fillRect(i * bw, 0, bw + 0.5, 1); });
-    g.fillStyle = '#0b0e13'; g.fillRect(0, c.height - 14, c.width, 14);
-    g.fillStyle = '#8b95a5'; g.font = '10px system-ui';
+    g.fillStyle = '#1a1a2e'; g.fillRect(0, c.height - 14, c.width, 14);
+    g.fillStyle = '#8d99ae'; g.font = '10px system-ui';
     g.fillText('FFT waterfall · 2405–2485 MHz · newest on top', 4, c.height - 3);
   }
 
   function drawCnn(w) {
     const c = w.cnn, g = c.getContext('2d'), m = w.spectrum; if (!m) return;
-    g.fillStyle = '#0b0e13'; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = '#1a1a2e'; g.fillRect(0, 0, c.width, c.height);
     g.font = '11px system-ui';
-    if (!m.probs) { g.fillStyle = '#8b95a5'; g.fillText('no classifier on this side (conventional radio)', 8, 20); return; }
+    if (!m.probs) { g.fillStyle = '#8d99ae'; g.fillText('no classifier on this side (conventional radio)', 8, 20); return; }
     const names = Object.keys(m.probs), half = c.width * 0.55;
     names.forEach((n, i) => {
       const y = 8 + i * 15, v = m.probs[n];
-      g.fillStyle = '#8b95a5'; g.fillText(n, 6, y + 10);
-      g.fillStyle = n === m.verdict ? (n === 'clean' ? '#3fb950' : '#f85149') : '#30363d';
+      g.fillStyle = '#8d99ae'; g.fillText(n, 6, y + 10);
+      g.fillStyle = n === m.verdict ? (n === 'clean' ? '#3fb950' : '#f85149') : '#3b3e58';
       g.fillRect(78, y + 2, (half - 120) * v, 10);
-      g.fillStyle = '#d8dee9'; g.fillText((v * 100).toFixed(0) + '%', 82 + (half - 120) * v, y + 11);
+      g.fillStyle = '#ffffff'; g.fillText((v * 100).toFixed(0) + '%', 82 + (half - 120) * v, y + 11);
     });
     const gx = half + 10, gw = c.width - gx - 6, gh = c.height - 22;
-    g.fillStyle = '#8b95a5'; g.fillText('Grad-CAM · where the CNN looked (time ↓, frequency →)', gx, 11);
+    g.fillStyle = '#8d99ae'; g.fillText('Grad-CAM · where the CNN looked (time ↓, frequency →)', gx, 11);
     if (w.gradcam) {
       const cw = gw / 32, ch = gh / 12;
       w.gradcam.forEach((row, r) => row.forEach((v, k) => { g.fillStyle = heat(v); g.fillRect(gx + k * cw, 16 + r * ch, cw + 0.5, ch + 0.5); }));
-    } else { g.strokeStyle = '#30363d'; g.strokeRect(gx, 16, gw, gh); g.fillText('band clean', gx + gw / 2 - 28, 16 + gh / 2); }
+    } else { g.strokeStyle = '#3b3e58'; g.strokeRect(gx, 16, gw, gh); g.fillText('band clean', gx + gw / 2 - 28, 16 + gh / 2); }
   }
 
   function drawKpis() {

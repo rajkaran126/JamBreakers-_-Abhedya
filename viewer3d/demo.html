@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" href="/favicon.ico" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ABHEDYA · judges' screen</title>
+<style>
+  :root { --bg: #1a1a2e; --edge: rgba(141, 153, 174, .22); --text: #ffffff; --mute: #8d99ae; --cyan: #c9d1de; --ok: #34e38c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  .wrap { display: grid; grid-template-columns: 1fr 430px; height: 100vh; }
+  .stage { position: relative; border-right: 1px solid var(--edge); }
+  .stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .side { display: flex; flex-direction: column; align-items: center; padding: 14px 16px; gap: 12px; background: radial-gradient(ellipse at top, #2b2d42, var(--bg) 70%); overflow: auto; }
+  .side h1 { font-size: 15px; letter-spacing: 1.5px; margin: 0; color: var(--cyan); }
+  .phone { position: relative; width: 384px; height: min(640px, calc(100vh - 330px)); min-height: 460px; border-radius: 46px; padding: 12px; flex: none;
+    background: linear-gradient(145deg, #3b3e58, #1f2035); box-shadow: 0 0 0 2px #4c5069, 0 24px 60px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(255,255,255,.06); }
+  .phone::before { content: ''; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 92px; height: 24px; border-radius: 14px; background: #15152a; z-index: 2; }
+  .phone iframe { width: 100%; height: 100%; border: 0; border-radius: 36px; background: #1a1a2e; }
+  .join { display: flex; gap: 12px; align-items: center; width: 100%; background: rgba(43, 45, 66, .8); border: 1px solid var(--edge); border-radius: 16px; padding: 10px 12px; cursor: pointer; }
+  .join .qr { flex: none; background: #fff; padding: 6px; border-radius: 10px; line-height: 0; } .join .qr svg { width: 96px; height: 96px; }
+  .join b { font-size: 15px; } .join p { margin: 3px 0; color: var(--mute); font-size: 12.5px; } .join code { color: var(--cyan); font-size: 12.5px; word-break: break-all; }
+  .bar { display: flex; gap: 8px; width: 100%; }
+  .bar button { flex: 1; font: 600 13px system-ui; color: var(--text); background: #2b2d42; border: 1px solid var(--edge); border-radius: 12px; padding: 9px 8px; cursor: pointer; }
+  .bar button.on { border-color: var(--ok); color: var(--ok); }
+  #big { position: fixed; inset: 0; z-index: 9; display: none; align-items: center; justify-content: center; background: rgba(26, 26, 46, .88); backdrop-filter: blur(6px); }
+  #big.show { display: flex; }
+  #big .box { text-align: center; } #big .box div { background: #fff; padding: 22px; border-radius: 22px; display: inline-block; line-height: 0; }
+  #big svg { width: min(62vh, 80vw); height: min(62vh, 80vw); }
+  #big h2 { font-size: 30px; margin: 0 0 14px; } #big p { font-size: 20px; color: var(--mute); margin: 14px 0 0; } #big code { color: var(--cyan); font-size: 24px; }
+  @media (max-width: 1100px) { .wrap { grid-template-columns: 1fr 400px; } .phone { width: 370px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage"><iframe id="view" src="/viewer/" title="3D simulation" allow="fullscreen"></iframe></div>
+  <aside class="side">
+    <h1>OPERATOR PHONE · LIVE</h1>
+    <div class="phone"><iframe src="/app/" title="ABHEDYA phone app"></iframe></div>
+    <div class="join" id="join" title="Show a big QR code">
+      <div class="qr" id="qr-small"></div>
+      <div><b>Judges: join from your phone</b><p>Same Wi-Fi or hotspot, then scan.</p><code id="url">…</code></div>
+    </div>
+    <div class="bar">
+      <button id="b-split" title="Play the same attack with AI OFF and AI ON side by side on the big screen">AI OFF vs ON</button>
+      <button id="b-qr">Big QR</button>
+      <button id="b-full" title="Full-screen 3D view">3D only ⤢</button>
+    </div>
+  </aside>
+</div>
+<div id="big"><div class="box"><h2>Scan to control the simulation</h2><div id="qr-big"></div><p>Join the same Wi-Fi or hotspot · <code id="url2"></code></p></div></div>
+<script src="vendor/qrcode.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const svg = (url, cell) => { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: cell, margin: 1, scalable: true }); };
+  fetch('/api/lan').then((r) => r.json()).then((r) => {
+    const here = location.hostname, lan = (r.app_urls || []).filter((u) => !u.includes('//127.'));
+    const url = here !== 'localhost' && !here.startsWith('127.') ? `${location.protocol}//${location.host}/app/` : lan[0] || `http://localhost:${r.port}/app/`;
+    $('qr-small').innerHTML = svg(url, 3); $('qr-big').innerHTML = svg(url, 8);
+    $('url').textContent = $('url2').textContent = url.replace('http://', '');
+    if (!lan.length) $('url').textContent += '  (no Wi-Fi/hotspot found)';
+  });
+  $('join').onclick = $('b-qr').onclick = () => $('big').classList.add('show');
+  $('big').onclick = () => $('big').classList.remove('show');
+  $('b-full').onclick = () => $('view').requestFullscreen?.();
+  // a tiny client of its own, to flip the big screen's side-by-side view
+  let ws, view = 'single';
+  const connect = () => {
+    ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+    ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.type === 'hello' || m.type === 'state') { view = m.view || view; $('b-split').classList.toggle('on', view === 'side_by_side'); $('b-split').disabled = m.type === 'state' && m.mode === 'scenario'; } };
+    ws.onclose = () => setTimeout(connect, 1500);
+  };
+  connect();
+  $('b-split').onclick = () => ws?.readyState === 1 && ws.send(JSON.stringify({ type: 'cmd', action: 'set_view', view: view === 'side_by_side' ? 'single' : 'side_by_side' }));
+  addEventListener('keydown', (e) => { if (e.key === 'q' || e.key === 'Q') $('big').classList.toggle('show'); if (e.key === 'Escape') $('big').classList.remove('show'); });
+</script>
+</body>
+</html>
