@@ -32,6 +32,7 @@ class Action:
     channels: tuple[int, ...] = ()
     ttl_s: float = 0.0
     between: tuple[str, str] = ("", "")
+    anti_follow: bool = False     # keyed mode: also never reuse the last 3 channels (only needed against a follower)
 
 
 @dataclass
@@ -82,10 +83,6 @@ class HopGuard:
         if len(self.times) >= self.max_hops:
             self.hold_until = t + self.hold_s
             self.times.clear()
-
-    @property
-    def holding(self) -> bool:
-        return False
 
 
 class Defender:

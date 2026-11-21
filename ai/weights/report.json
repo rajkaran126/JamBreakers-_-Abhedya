@@ -1,0 +1,91 @@
+{
+  "live_test_windows": 1680,
+  "accuracy": 0.9542,
+  "per_class": {
+    "clean": 1.0,
+    "barrage": 1.0,
+    "random": 0.883,
+    "sweep": 1.0,
+    "reactive": 0.979,
+    "deceptive": 0.958,
+    "accidental": 0.858
+  },
+  "confusion": [
+    [
+      240,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      240,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      212,
+      0,
+      27,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      240,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      235,
+      0,
+      5
+    ],
+    [
+      7,
+      0,
+      0,
+      0,
+      0,
+      230,
+      3
+    ],
+    [
+      34,
+      0,
+      0,
+      0,
+      0,
+      0,
+      206
+    ]
+  ],
+  "classes": [
+    "clean",
+    "barrage",
+    "random",
+    "sweep",
+    "reactive",
+    "deceptive",
+    "accidental"
+  ],
+  "numpy_inference_ms_median": 1.94,
+  "epochs": 12,
+  "train_windows": 26460,
+  "trained_s": 226
+}

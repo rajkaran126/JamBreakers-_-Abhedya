@@ -78,9 +78,8 @@ def qpsk_baseband(n: int, rng: np.random.Generator, symbol_rate: float = SYMBOL_
     return y / np.sqrt(np.mean(np.abs(y) ** 2) + 1e-30)
 
 
-def band_noise(n: int, rng: np.random.Generator, bw_hz: float, edge: str = "soft") -> np.ndarray:
-    """Complex noise filled into [-bw/2, bw/2] in the frequency domain."""
-    spec = (rng.standard_normal(n) + 1j * rng.standard_normal(n))
+@lru_cache(maxsize=64)
+def _band_mask(n: int, bw_hz: float, edge: str) -> tuple[np.ndarray, float]:
     f = np.fft.fftfreq(n, 1 / FS)
     half = bw_hz / 2
     if edge == "soft":
@@ -89,8 +88,15 @@ def band_noise(n: int, rng: np.random.Generator, bw_hz: float, edge: str = "soft
     else:  # 'ofdm': flat top, steep edges, null on the DC subcarrier
         mask = (np.abs(f) <= half).astype(float)
         mask[np.abs(f) < FS / n * 1.5] = 0.0
-    y = np.fft.ifft(spec * mask)
-    return y / np.sqrt(np.mean(np.abs(y) ** 2) + 1e-30)
+    # expected output power of unit complex noise through the mask, for normalisation
+    return mask, float(np.sqrt(2 * np.sum(mask ** 2)) / n)
+
+
+def band_noise(n: int, rng: np.random.Generator, bw_hz: float, edge: str = "soft") -> np.ndarray:
+    """Complex noise filled into [-bw/2, bw/2] in the frequency domain (unit mean power)."""
+    mask, norm = _band_mask(n, round(bw_hz, -3), edge)
+    spec = rng.standard_normal(n) + 1j * rng.standard_normal(n)
+    return np.fft.ifft(spec * mask) / norm
 
 
 def chirp(n: int, t0: float, f0: float, rate: float) -> np.ndarray:
@@ -105,8 +111,13 @@ def chirp(n: int, t0: float, f0: float, rate: float) -> np.ndarray:
     return out
 
 
+@lru_cache(maxsize=256)
+def _rotator(n: int, f_hz: float) -> np.ndarray:
+    return np.exp(2j * np.pi * f_hz * np.arange(n) / FS)
+
+
 def shift(x: np.ndarray, f_hz: float) -> np.ndarray:
-    return x * np.exp(2j * np.pi * f_hz * np.arange(len(x)) / FS)
+    return x * _rotator(len(x), round(f_hz, -3))
 
 
 def gate_samples(gate: Optional[np.ndarray], n: int) -> np.ndarray | float:

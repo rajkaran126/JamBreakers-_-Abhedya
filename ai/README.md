@@ -1,5 +1,13 @@
-# ai/ — classifier and defender (Phase 2 · owner: Vishwas)
+# ai/ — classifier and defender (owner: Vishwas)
 
-Will hold: spectrogram window generator, PyTorch training script (`requirements-train.txt`),
-exported weights (`.npz`), pure-NumPy inference, 3-window vote, hopping policy with backups,
-hop guard, follower detection, Grad-CAM (12×32), RSSI localisation, benchmark.
+| File | What |
+|---|---|
+| `features.py` | Shared preprocessing: dB above the calibrated noise floor / 20 |
+| `dataset.py` | Synthetic + live-world spectrogram windows (`python -m ai.dataset`) |
+| `train.py` | PyTorch training, export to `weights/cnn_v1.npz`, report with confusion matrix (`python -m ai.train`) |
+| `cnn.py` | NumPy inference, 3-window vote, closed-form Grad-CAM (12×32) |
+| `defender.py` | AegisDefender: per-class responses, backups, follower detection, hop guard, recovery, relays |
+| `localize.py` | RSSI least-squares jammer localisation with NLOS rejection and a 95 % radius |
+| `weights/` | Trained weights (committed) and `report.json` |
+
+`data/` is generated and not committed.

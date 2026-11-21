@@ -625,6 +625,10 @@
           "items": {
             "$ref": "#/$defs/channel"
           }
+        },
+        "anti_follow": {
+          "type": "boolean",
+          "description": "Keyed mode is also avoiding the last 3 channels (follower detected)"
         }
       }
     },

@@ -46,5 +46,5 @@ def run_episode(jammer: Optional[str], defender: str, seed: int = 7, duration_s:
     sent, deliv = w.total_sent - base_sent, w.total_delivered - base_deliv
     lat = sorted(w.latencies)
     return RunResult(jammer or "none", w.defender_name, round(100 * deliv / max(sent, 1), 1), round(w.outage_ms - base_out, 1),
-                     float(np.median(lat)) if lat else None, float(np.percentile(lat, 95)) if lat else None,
+                     round(float(np.median(lat)), 1) if lat else None, round(float(np.percentile(lat, 95)), 1) if lat else None,
                      w.hops, decisions, w)

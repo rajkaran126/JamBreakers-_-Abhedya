@@ -153,10 +153,11 @@ class Network:
                 total += dbm_to_mw(jm.power_dbm + self.jam_gain_db[a] + fade) * f
         return total
 
-    def probe(self, jammers, channel: int, rng: np.random.Generator) -> np.ndarray:
-        """One-off delivery draw on another channel (control frames), without touching the EMAs."""
+    def probe(self, jammers, channel: int, rng: np.random.Generator, extra_db: float = 0.0) -> np.ndarray:
+        """One-off delivery draw on another channel (control frames), without touching the EMAs.
+        extra_db: margin of the robust control format (power, BPSK, repetition coding)."""
         n_links = len(self.pairs)
-        sig = TX_POWER_DBM + self.tx_boost_db - self.link_loss_db + rician_gain_db(rng, self.link_k_db, n_links)
+        sig = TX_POWER_DBM + self.tx_boost_db + extra_db - self.link_loss_db + rician_gain_db(rng, self.link_k_db, n_links)
         i_mw = self.interference_mw(jammers, channel, rng)
         sinr = sig - mw_to_dbm(dbm_to_mw(NOISE_INBAND_DBM) + np.maximum(i_mw[self.pa], i_mw[self.pb]))
         return rng.random(n_links) < packet_delivery(sinr, self.modulation)

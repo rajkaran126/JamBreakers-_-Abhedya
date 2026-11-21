@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AEGIS-LINK · 3D simulation</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<!-- side-by-side captions (positioned over each viewport) -->
+<div id="split" class="hidden">
+  <div class="half left"><div class="cap off">AI OFF · conventional fixed hopping</div><div class="strip" id="strip-ai_off"></div></div>
+  <div class="half right"><div class="cap on">AI ON · AEGIS-LINK</div><div class="strip" id="strip-ai_on"></div></div>
+  <div class="divider"></div>
+</div>
+
+<div id="ui">
+  <div class="leftcol">
+  <section class="card brand">
+    <h1>AEGIS-LINK</h1>
+    <span id="pill-conn" class="pill bad">offline</span>
+    <span id="pill-ai" class="pill">AI —</span>
+    <span id="pill-src" class="pill muted">—</span>
+  </section>
+
+  <section class="card kpis" id="kpis">
+    <div><b id="k-delivery">—</b><span>packets delivered %</span></div>
+    <div><b id="k-links">—</b><span>healthy links</span></div>
+    <div><b id="k-latency">—</b><span>hop latency ms (median)</span></div>
+    <div><b id="k-outage">—</b><span>outage s</span></div>
+    <div><b id="k-decision">—</b><span>last decision ms</span></div>
+    <div><b id="k-hops">—</b><span>channel hops</span></div>
+  </section>
+
+  <section class="card legend">
+    <div><i class="bar ok"></i>link healthy</div>
+    <div><i class="bar deg"></i>degraded</div>
+    <div><i class="bar down"></i>down</div>
+    <div><i class="dot red"></i>jammer, dome = approximate reach</div>
+    <div><i class="ring"></i>AI's estimate of jammer position</div>
+    <div><i class="dot blue"></i>packets flowing to command post</div>
+  </section>
+
+  <section class="card security">
+    <h2>SECURITY · AES-256-GCM</h2>
+    <p id="sec-text">Mission key fingerprint <b id="sec-fp">—</b><br>
+      verified <b id="sec-ver">0</b> · rejected <b id="sec-rej">0</b> (forged <b id="sec-forged">0</b>)</p>
+    <div class="row">
+      <button data-sec="tamper">Tamper</button><button data-sec="spoof">Spoof</button>
+      <button data-sec="replay">Replay</button><button data-sec="eavesdrop">Eavesdrop</button>
+    </div>
+    <p id="sec-result" class="small muted"></p>
+  </section>
+  </div>
+
+  <div class="banner" id="banner">Live arena · CNN defender · <span id="banner-backend">—</span> signal chain</div>
+
+  <section class="card decisions">
+    <h2>LIVE DECISIONS</h2>
+    <div id="dec-list"></div>
+  </section>
+
+  <section class="card cnn">
+    <h2>CNN CLASSIFIER <span id="cnn-verdict" class="tag"></span></h2>
+    <div class="cnn-body">
+      <div id="cnn-bars"></div>
+      <canvas id="gradcam" width="320" height="120"></canvas>
+    </div>
+    <p class="small muted">Grad-CAM: where in time (rows) and frequency (columns) the CNN looked</p>
+  </section>
+
+  <section class="card spectrum">
+    <h2>SPECTRUM <span class="small muted">2405–2485 MHz at the command post</span></h2>
+    <canvas id="spec" width="520" height="70"></canvas>
+    <canvas id="waterfall" width="520" height="90"></canvas>
+  </section>
+
+  <section class="card controls">
+    <select id="jtype"></select>
+    <input id="player" placeholder="your name" maxlength="24">
+    <span class="hint">click the ground to launch</span>
+    <button id="b-ai-on">AI ON</button>
+    <button id="b-ai-off">AI OFF</button>
+    <button id="b-split">Side by side</button>
+    <button id="b-clear">Clear jammers</button>
+    <button id="b-theme" title="Day / night">☀ / ☾</button>
+    <button id="b-bench">▶ Benchmark</button>
+    <button id="b-reset" title="Restart from t = 0">↺</button>
+  </section>
+
+  <div id="toasts"></div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

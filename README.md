@@ -3,10 +3,10 @@
 AI-enabled adaptive anti-jamming for tactical drone and vehicle networks.
 Team JamBreakers · BITS2WAVE round 2 · SW-26 (software track).
 
-> **Status: Phase 1 done.** Real radio world: link budget with path loss, Rician fading and
-> obstacles; 7 jammers; GNU Radio receiver chain (tested on GNU Radio 3.10.9) with a NumPy fallback;
-> mesh routing; fixed-hopping and energy-detector baselines; seeded replay; twin worlds.
-> The CNN defender (Phase 2) plugs in next. Until then the AI ON side runs the energy detector.
+> **Status: Phase 2 done.** Real radio world (GNU Radio chain tested on GNU Radio 3.10.9, NumPy
+> fallback), 7 jammers, baselines, twin worlds, plus the AI. The CNN is 95.4 % accurate on held-out
+> live windows, runs in NumPy in 1.9 ms, and comes with Grad-CAM. The defender reacts per class with
+> backups, follower detection and keyed fast hopping, and localises jammers by RSSI.
 
 ## Run
 
@@ -25,7 +25,8 @@ Then open:
 | http://localhost:8000/api/schema | The message contract (`shared/schema.json`) |
 | http://localhost:8000/api/lan | The laptop's LAN URLs (for phones and the QR code) |
 | ws://localhost:8000/ws | The one WebSocket: ~20 Hz broadcast + commands |
-| /viewer/ · /app/ | 3D view and phone app (served once they're built) |
+| http://localhost:8000/view/ | **3D simulation view** (Three.js, vendored, works offline) |
+| /app/ | Phone app (Phase 5) |
 
 **Phones:** use the same Wi-Fi or hotspot. The server binds to `0.0.0.0`. On Windows, allow Python
 through the firewall for **private** networks.
@@ -115,6 +116,75 @@ Baselines (12 s, jammer from t = 2 s, seed 7; `python -m sim.experiment` style r
 The CNN defender has to beat every column. Barrage and sweep need power and rate backups, and the
 follower needs keyed hopping.
 
+## The AI (Phase 2)
+
+**Classifier.** A 3-layer CNN (19k parameters) reads a 12 × 128 spectrogram window (0.3 ms ×
+80 MHz) and outputs 7 classes. It is trained in PyTorch on 16,800 synthetic windows plus 6,300
+windows captured from the running world, then exported to `ai/weights/cnn_v1.npz` and served in pure
+NumPy, so the server needs no PyTorch. The global-average-pool head gives Grad-CAM in closed form:
+a 12 × 32 heat map showing where the CNN looked.
+
+| Held-out live windows (other seeds) | 1,680 |
+|---|---|
+| Accuracy | **95.4 %** (clean 100, barrage 100, sweep 100, reactive 97.9, deceptive 95.8, random 88.3, accidental 85.8) |
+| NumPy inference | 1.9 ms per window (target < 20 ms) |
+
+Rebuild with `python -m ai.dataset` and then `python -m ai.train` (about 2 + 4 min on a laptop CPU).
+Full report: `ai/weights/report.json`.
+
+**Defender** (`ai/defender.py`). It triggers at more than 10 % loss, captures 3 windows at the
+receiver that is losing packets, and decides on the average of the 3 classifications:
+
+| Class | Response |
+|---|---|
+| barrage | Raise power +3 dB per step (cap +9 dB) and drop to BPSK; hopping is pointless |
+| sweep | Raise power and hold, then BPSK; hopping only thrashes |
+| random | Blacklist the occupied channels and hop to the cleanest one |
+| reactive | Keyed fast hopping, and blacklist the channel it listens on |
+| deceptive | Hop away and blacklist the channel; authentication rejects the forged frames |
+| accidental | No alarm; quietly move to a clean channel |
+| clean but losing packets | A link is blocked, so dispatch a relay drone above the tallest obstacle + 30 m |
+
+On top of the per-class responses:
+
+- **Follower detection, from behaviour:** the jammer re-finds us under 300 ms after a hop, or, while fast hopping, the jammed channel matches where we were 1–4 slots earlier. Response: keyed fast hopping that never reuses the last 3 channels.
+- **Hop guard and recovery:** at most 4 hops in 5 s; when the band is quiet, emergency measures are stepped back down one at a time.
+- **Localisation:** wideband RSSI least squares with per-node path-loss exponents, a leave-one-out NLOS rejection pass (8 dB) and a 95 % uncertainty radius. Estimates are published under 300 m and announced under 150 m. Measured: published in 23 of 30 runs, median error 67 m on a 1.5 × 1.3 km map.
+
+**Results** (12 s runs, jammer from t = 2 s, 4 seeds × random jammer positions; mean delivery):
+
+| Jammer | Fixed hopping (AI OFF) | Energy detector | **AEGIS** | AEGIS worst run |
+|---|---|---|---|---|
+| barrage | 40.8 % | 40.8 % | **92.6 %** | 86.0 % |
+| random | 66.3 % | 93.9 % | **99.0 %** | 97.8 % |
+| sweep | 41.2 % | 41.2 % | **93.4 %** | 89.7 % |
+| reactive | 88.4 % | 21.7 % | **93.9 %** | 93.2 % |
+| deceptive | 92.7 % | 95.2 % | **99.8 %** | 99.8 % |
+| accidental | 97.8 % | 99.0 % | **99.6 %** | 99.3 % |
+| follower | 13.9 % | 13.1 % | **99.7 %** | 99.6 % |
+
+Hop latency (first jammed slot until the whole network is on the new channel, control frame
+included): median 20 ms, p95 50 ms, over 509 hops.
+
+**Lessons this build taught us** (good answers for judges):
+
+- **Keyed hopping needs real choices.** With 4 channels blacklisted and 3 avoided, only one channel was left each slot, so the "keyed" sequence turned into a 4-channel loop that the follower learned. The sequence now always keeps at least 3 candidates, and the blacklist gives way first.
+- **The control link must be robust.** Barrage and sweep blocked control frames for 8 s until they were sent like real control traffic: max power, BPSK, repetition coding, and a rendezvous channel that moves on every retry.
+- **Don't re-classify every 10 ms.** Under heavy jamming that cost 27 ms per slot and stalled the server. The defender now waits 50 ms after acting and 250 ms after holding, and the server never does more than 2× the normal work per tick.
+
+## 3D view
+
+Open `http://localhost:8000/view/`. It shows:
+
+- **Scene:** night or day sky, terrain with forests, a lake and mountains, the arena's buildings and hill, and the vehicles' roads.
+- **Units:** drones with spinning rotors and status LEDs, vehicles, the command post, and relay drones.
+- **Links and packets:** links coloured by health, with packets flowing to the command post (red ones are dropped).
+- **Jammers and the AI's estimate:** each jammer has an energy-shield dome sized to its reach and a ground heat map. The AI's estimate is a yellow ring sized by its uncertainty.
+- **Panels:** KPIs, legend, security, live decisions, the CNN's probabilities with Grad-CAM, and the spectrum with a waterfall.
+- **Controls:** pick a jammer type and click the ground to launch it. AI ON, AI OFF and **Side by side** (two viewports in one renderer: AI OFF left, AI ON right, each with its own KPI strip). Day/night toggle.
+
+Drag to orbit, scroll to zoom, right-drag to pan. Units are drawn about 14× real size so they can be read from 1 km away.
+
 ## Layout
 
 ```
@@ -138,7 +208,7 @@ the same.
 |---|---|---|---|
 | 0 | Skeleton, schema, server, fake world | Kodandarama | ✅ |
 | 1 | GNU Radio + NumPy radio world, 7 jammers, baselines | Kodandarama | ✅ |
-| 2 | Data + CNN, intelligent hopping, Grad-CAM, localisation | Vishwas | |
+| 2 | Data + CNN, intelligent hopping, Grad-CAM, localisation | Vishwas | ✅ |
 | 3 | AES-256-GCM, keyed hop sequence, security tests | Neha + Vishwas | |
 | 4 | Twin worlds (AI OFF/ON) + benchmark vs fixed hopping | Vishwas + Kodandarama | |
 | 5 | 3D view, React PWA, judges' screen, QR join | Akshatha, Neha | |

@@ -36,6 +36,8 @@ log = logging.getLogger("aegis.sim")
 SRC = "sim"
 SLOTS_PER_TICK = 5
 KEY_EPOCH_S = 60.0
+MAX_BLACKLIST = 4
+CONTROL_MARGIN_DB = 12.0         # control frames: max power, BPSK, 4x repetition
 STREAMS = ["fade", "pkt", "jam", "ctrl", "phy", "def"]
 AI_ON_DEFENDER = "aegis"         # falls back to 'energy' until ai/defender.py exists
 AI_OFF_DEFENDER = "fixed_hopping"
@@ -93,10 +95,15 @@ class SimWorld:
         self.dwell_channel = 0
         self.blacklist: dict[int, float] = {}         # channel -> expiry time
         self.recent_channels: deque[int] = deque(maxlen=3)
+        self.anti_follow = False
         self.pending: Optional[Pending] = None
         self.net.tx_boost_db = 0.0
         self.net.modulation = "QPSK"
+        had_relay = any(n.kind == "relay" for n in self.net.nodes)
         self.net.remove_relays()
+        if had_relay and hasattr(self.net, "positions"):
+            self.net.update_geometry(self.t, self.jammers)
+            self.net.route()
         self.ai_enabled = name not in ("fixed_hopping", "none")
 
     def _reset_metrics(self) -> None:
@@ -130,8 +137,11 @@ class SimWorld:
         if self.hop_mode == "fixed":
             return fixed_channel(slot)
         if self.hop_mode == "keyed":
-            avoid = {(c + d) % N_CH for c in self.recent_channels for d in (-1, 0, 1)}
-            return keyed_channel(self.key, slot, self.active_blacklist(), avoid)
+            # never the last 3 channels (a follower re-tunes ~25 ms late) nor right next to the last one
+            if not self.anti_follow:
+                return keyed_channel(self.key, slot, self.active_blacklist())
+            soft = {(self.recent_channels[-1] + d) % N_CH for d in (-1, 1)} if self.recent_channels else set()
+            return keyed_channel(self.key, slot, self.active_blacklist(), set(self.recent_channels), soft)
         return self.dwell_channel
 
     def rendezvous(self, attempt: int = 0) -> int:
@@ -161,6 +171,32 @@ class SimWorld:
             if a < net.jam_gain_db.shape[0]:
                 emitters.extend(jm.emitters(float(jm.power_dbm + net.jam_gain_db[a, ni]), self.t, self.rng["phy"]))
         return self.phy.synthesize(emitters, self.rng["phy"], t0=self.t)
+
+    def rssi_reports(self, channel: Optional[int] = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """What each node's wideband receiver measures from hostile emitters: total received power over
+        the 80 MHz band, averaged over 8 readings (fading), with 1 dB meter noise. Returns node
+        positions, readings (dBm) and each node's path-loss exponent (the system knows which of its own
+        nodes are airborne). Readings near the noise floor carry no information and are dropped."""
+        from .network import AIRBORNE
+        from .radio import NOISE_BAND_DBM, PL_EXPONENT_AIR, PL_EXPONENT_GROUND, RICIAN_K_DB_GROUND, rician_gain_db
+        net, rng = self.net, self.rng["def"]
+        n = len(net.nodes)
+        total = np.zeros(n)
+        for a, jm in enumerate(self.jammers):
+            if jm.friendly:
+                continue
+            fades = rician_gain_db(rng, RICIAN_K_DB_GROUND, (8, n))
+            total += dbm_to_mw(jm.power_dbm + net.jam_gain_db[a][None, :] + fades).mean(axis=0)
+        meas = mw_to_dbm(total + dbm_to_mw(NOISE_BAND_DBM)) + rng.normal(0, 1.0, n)
+        exps = np.array([PL_EXPONENT_AIR if nd.kind in AIRBORNE else PL_EXPONENT_GROUND for nd in net.nodes])
+        keep = meas > NOISE_BAND_DBM + 10
+        return net.positions[keep], meas[keep], exps[keep]
+
+    def nearest_jammer_id(self, x: float, y: float) -> Optional[str]:
+        """Ground truth, used only to tag an estimate for scoring and display."""
+        if not self.jammers:
+            return None
+        return min(self.jammers, key=lambda j: (j.pos[0] - x) ** 2 + (j.pos[1] - y) ** 2).id
 
     # ---------- one radio slot ----------
     def step_slot(self) -> None:
@@ -227,6 +263,10 @@ class SimWorld:
                     self.pending = Pending(decision, self.slot, self.slot + 1)
                 else:
                     self._emit_decision(decision, latency=None)
+            for level, text in getattr(self.defender, "events", []):
+                self.outbox.append(envelope("event", SRC, world=self.world_id, level=level, text=text))
+            if getattr(self.defender, "events", None):
+                self.defender.events.clear()
         self.recent_channels.append(ch)
         self.slot += 1
 
@@ -244,7 +284,7 @@ class SimWorld:
         if p is None or self.slot < p.next_try:
             return False
         rdv = self.rendezvous(p.attempts)
-        ok = self.net.probe(self.jammers, rdv, self.rng["ctrl"])
+        ok = self.net.probe(self.jammers, rdv, self.rng["ctrl"], extra_db=CONTROL_MARGIN_DB)
         reached = []
         for nd in self.net.nodes:
             if nd.id == "CP":
@@ -279,6 +319,10 @@ class SimWorld:
             elif a.kind == "mode" and a.mode:
                 if a.mode == "dwell" and self.hop_mode != "dwell":
                     self.dwell_channel = a.channel if a.channel is not None else self.channel
+                if a.mode == "keyed":
+                    self.anti_follow = self.anti_follow or a.anti_follow
+                else:
+                    self.anti_follow = False
                 self.hop_mode = a.mode
                 self.hops += 1
             elif a.kind == "power":
@@ -288,6 +332,10 @@ class SimWorld:
             elif a.kind == "blacklist":
                 for c in a.channels:
                     self.blacklist[c] = self.t + a.ttl_s
+                # keep at least half the band usable: only the 4 most recent entries stay active
+                active = sorted(self.active_blacklist(), key=lambda c: self.blacklist[c], reverse=True)
+                for c in active[MAX_BLACKLIST:]:
+                    self.blacklist.pop(c, None)
             elif a.kind == "relay":
                 self._dispatch_relay(*a.between)
 
@@ -301,6 +349,10 @@ class SimWorld:
         relay = Node("R1", "relay", pos=mid)
         self.net.add_node(relay)
         self.node_ema["R1"] = 1.0
+        self.net.update_geometry(self.t, self.jammers)     # link arrays must include the new node now
+        self.net.route()
+        self.outbox.append(envelope("event", SRC, world=self.world_id, level="good",
+                                    text=f"Relay drone R1 on station at {mid[2]:.0f} m between {a_id} and {b_id}."))
 
     def _emit_decision(self, d: Decision, latency: Optional[float]) -> None:
         msg = envelope("decision", SRC, world=self.world_id, sim_time_s=round(self.t, 3), confidence=round(d.confidence, 3),
@@ -313,7 +365,8 @@ class SimWorld:
             msg["to_channel"] = d.to_channel
         self.outbox.append(msg)
         text = d.reason if latency is None else f"{d.reason} Done in {latency:.0f} ms."
-        self.outbox.append(envelope("event", SRC, world=self.world_id, level="good" if d.action != "ignore" else "info", text=text))
+        level = "info" if d.action == "ignore" or d.cls in ("accidental", "clean") else "good"
+        self.outbox.append(envelope("event", SRC, world=self.world_id, level=level, text=text))
 
     def _apply_jammer_changes(self) -> None:
         if self._clear_pending:
@@ -325,6 +378,7 @@ class SimWorld:
             self.blacklist.clear()
             self.jam_start = None
             if self.hop_mode == "keyed" and self.defender_name != "fixed_hopping":
+                self.anti_follow = False
                 self.hop_mode = "dwell"
                 self.dwell_channel = self.channel_for_slot(self.slot)
         if self._launch_queue:
@@ -344,8 +398,8 @@ class SimWorld:
         return {
             "delivery_pct": round(100 * d / s, 1) if s else 100.0,
             "delivery_total_pct": round(100 * self.total_delivered / self.total_sent, 1) if self.total_sent else 100.0,
-            "hop_latency_ms": float(np.median(lat)) if lat else None,
-            "hop_latency_p95_ms": float(np.percentile(lat, 95)) if lat else None,
+            "hop_latency_ms": round(float(np.median(lat)), 1) if lat else None,
+            "hop_latency_p95_ms": round(float(np.percentile(lat, 95)), 1) if lat else None,
             "outage_ms": round(self.outage_ms, 1),
             "healthy_links": sum(1 for l in links if l["routed"] and l["status"] == "ok"),
             "total_links": sum(1 for l in links if l["routed"]),
@@ -384,9 +438,9 @@ class SimWorld:
                           "tx_power_dbm": TX_POWER_DBM + net.tx_boost_db, "modulation": net.modulation, "status": status,
                           **({"parent": net.parent.get(nd.id)} if net.parent.get(nd.id) else {})})
         return envelope("state", SRC, world=self.world_id, tick=self.tick, sim_time_s=round(self.t, 3),
-                        ai_enabled=self.ai_enabled, defender=self.defender_name, hop_mode=self.hop_mode, view=view,
+                        ai_enabled=self.ai_enabled, defender=self.defender_name, hop_mode=self.hop_mode, anti_follow=self.anti_follow, view=view,
                         mode="arena", scenario=None, paused=paused, speed=speed, nodes=nodes, links=self.link_msgs(),
-                        jammers=[j.to_msg() for j in self.jammers], estimates=getattr(self, "estimates", []),
+                        jammers=[j.to_msg() for j in self.jammers], estimates=getattr(self.defender, "estimates", []),
                         obstacles=net.obstacles, blacklist=sorted(self.active_blacklist()), kpis=self.kpis())
 
     def spectrum_msg(self) -> dict[str, Any]:
@@ -465,7 +519,9 @@ class SimArena:
         if not self.paused:
             self._acc += dt * self.speed
             n = int(self._acc / SLOT_S + 1e-9)
-            n = min(n, 40 * self.speed)
+            # never more than 2x the normal work per tick: an overloaded laptop slows simulated time a
+            # little instead of falling further behind each tick (no death spiral, no frozen screens)
+            n = min(n, 2 * SLOTS_PER_TICK * self.speed)
             self._acc -= n * SLOT_S
             self._acc = min(self._acc, SLOT_S)
             for w in self.worlds.values():

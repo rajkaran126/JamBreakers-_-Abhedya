@@ -211,6 +211,11 @@ def create_app(cfg: Settings | None = None, world_factory: Callable[[Settings], 
 
     viewer = ROOT / "viewer3d"
     if (viewer / "index.html").exists():
+        @app.get("/view")
+        @app.get("/view/")
+        @app.get("/viewer")
+        async def view_redirect() -> RedirectResponse:
+            return RedirectResponse("/viewer/")
         app.mount("/viewer", StaticFiles(directory=viewer, html=True), name="viewer")
 
     mobile_dist = ROOT / "mobile" / "dist"

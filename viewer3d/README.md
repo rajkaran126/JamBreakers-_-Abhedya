@@ -1,7 +1,14 @@
-# viewer3d/ — 3D simulation view (Phase 5 · owner: Akshatha)
+# viewer3d/ — 3D simulation view (owner: Akshatha)
 
-Static site served by the backend at `/viewer/` once `viewer3d/index.html` exists.
-Vendor Three.js into `viewer3d/vendor/` (no CDN: the demo runs offline).
-Connect to `ws://<host>/ws`; read `hello`, then draw every `state` / `spectrum` / `decision` / `event`.
-In side-by-side view there are two `state` messages per tick: `world: "ai_off"` and `world: "ai_on"`.
-`backend/static/console.html` is a small working reference client.
+Served at `/view/` (and `/viewer/`). Three.js 0.170 is vendored in `vendor/` (MIT, see THREE_LICENSE.txt),
+so it works with no internet.
+
+| File | What |
+|---|---|
+| `index.html` | Layout: glass panels, controls, side-by-side captions |
+| `style.css` | Look and feel |
+| `app.js` | Scene (sky, terrain, trees, obstacles), unit models, links/packets, jammer domes, estimate rings, WebSocket client, side-by-side rendering |
+
+The view is a thin client. It draws whatever `state` / `spectrum` / `decision` / `event` messages
+say, so it needs no changes when the simulation changes. Trees are an InstancedMesh capped at
+TREE_MAX: never write more instances than that.
