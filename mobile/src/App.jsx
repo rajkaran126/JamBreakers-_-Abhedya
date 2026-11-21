@@ -4,6 +4,7 @@ import Live from './tabs/Live.jsx';
 import MapTab from './tabs/MapTab.jsx';
 import Missions from './tabs/Missions.jsx';
 import More from './tabs/More.jsx';
+import Login from './Login.jsx';
 
 const TABS = [
   { id: 'live', label: 'Home', icon: <path d="M3 12h4l3-8 4 16 3-8h4" /> },
@@ -17,12 +18,15 @@ export default function App() {
   const [tab, setTab] = useState(() => (location.hash.slice(1) || 'live'));
   useEffect(() => { history.replaceState(null, '', '#' + tab); window.scrollTo(0, 0); }, [tab]);
   const scn = mode() === 'scenario';
+  if (S.auth === 'needed') return <Login />;
+  if (S.auth === 'checking') return <div className="login"><p className="mute">Connecting to the laptop…</p></div>;
   const connLabel = { online: 'Live', connecting: 'Connecting…', reconnecting: 'Reconnecting…', offline: 'Offline' }[S.conn];
   return (
     <div className="app">
       <header className="top">
         <div className="logo"><img className="wordmark" src="./abhedya_logo_dark.png" alt="ABHEDYA" /></div>
         {scn && <span className="pill scn" onClick={() => setTab('missions')}>🎬 Mission</span>}
+        {S.me?.role === 'observer' && <span className="pill viewonly" title="This account can watch but not control">👁 View only</span>}
         <span className={`pill conn ${S.conn}`}><i />{connLabel}</span>
       </header>
       {S.conn !== 'online' && (
