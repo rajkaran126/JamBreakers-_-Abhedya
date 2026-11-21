@@ -8,6 +8,8 @@ the world sends them as a control frame and they take effect only once that fram
   fixed_hopping   conventional FHSS: a public repeating pattern, one channel per slot (the AI OFF side)
   energy          hops to the quietest channel when loss passes 10 % (no classification)
   aegis           the CNN defender (ai/defender.py, Phase 2)
+  rl              a tabular Q-learning agent trained in this simulator (ai/rl.py, Phase 6)
+  hybrid          AEGIS leads, the RL policy takes over when AEGIS is stuck or the attack keeps changing (Phase 8)
 """
 from __future__ import annotations
 
@@ -56,7 +58,7 @@ class SlotObs:
     sent: int
     delivered: int
     loss_recent: float                       # over the last 5 slots
-    energy_dbm: np.ndarray                   # in-band energy per channel at the command post
+    energy_dbm: np.ndarray                   # in-band energy per channel, fused from every node's reports (worst case)
     tx_boost_db: float
     modulation: str
     control_pending: bool
@@ -129,6 +131,12 @@ DEFENDERS: dict[str, type[Defender]] = {"none": NoDefense, "fixed_hopping": Fixe
 
 
 def make_defender(name: str, rng: np.random.Generator) -> Defender:
+    if name == "rl":
+        from ai.rl import RLDefender
+        return RLDefender(rng)
+    if name == "hybrid":
+        from ai.defender import HybridDefender
+        return HybridDefender(rng)
     if name == "aegis":
         try:
             from ai.defender import AegisDefender  # Phase 2

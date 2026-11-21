@@ -13,7 +13,8 @@ from .world import SimWorld
 
 DEFAULT_JAMMER_POS = {"barrage": (220.0, 140.0), "random": (160.0, 90.0), "sweep": (200.0, 120.0),
                       "reactive": (150.0, 80.0), "deceptive": (150.0, 80.0), "accidental": (60.0, 30.0),
-                      "follower": (150.0, 80.0)}
+                      "follower": (150.0, 80.0), "smart": (150.0, 80.0), "novel": (180.0, 100.0),
+                      "novel_staircase": (180.0, 100.0)}
 
 
 @dataclass
