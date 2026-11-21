@@ -1,0 +1,8 @@
+# Server runtime (no PyTorch here; inference runs in NumPy)
+fastapi>=0.110
+uvicorn>=0.29          # plain uvicorn, NOT uvicorn[standard] (fails on some new Windows Pythons)
+websockets>=12         # WebSocket support for plain uvicorn
+pydantic>=2.6
+numpy>=1.26
+scipy>=1.11
+cryptography>=42

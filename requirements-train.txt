@@ -1,0 +1,3 @@
+# Only for training the CNN (Phase 2). Not needed to run the server.
+-r requirements.txt
+torch>=2.2

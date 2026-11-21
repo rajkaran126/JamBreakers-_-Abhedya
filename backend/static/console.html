@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AEGIS-LINK · debug console</title>
+<style>
+  :root { --bg:#0e1116; --panel:#161b22; --line:#2a313c; --text:#d8dee9; --mute:#8b95a5;
+          --ok:#3fb950; --deg:#d29922; --down:#f85149; --accent:#58a6ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:13px/1.4 system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
+  header h1 { font-size:15px; margin:0; letter-spacing:.5px; }
+  .pill { padding:2px 8px; border-radius:10px; background:var(--line); color:var(--mute); }
+  .pill.on { background:#1f3d2a; color:var(--ok); } .pill.off { background:#3d1f1f; color:var(--down); }
+  main { display:grid; grid-template-columns: minmax(320px,1fr) 360px; gap:12px; padding:12px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px; }
+  h2 { font-size:12px; text-transform:uppercase; color:var(--mute); margin:0 0 8px; letter-spacing:.8px; }
+  canvas { width:100%; background:#0b0e13; border-radius:6px; display:block; cursor:crosshair; }
+  .kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .kpi { background:#0b0e13; border-radius:6px; padding:6px; } .kpi b { display:block; font-size:16px; }
+  .kpi span { color:var(--mute); font-size:11px; }
+  button, select { background:#21262d; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 9px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  .row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  #log { height:220px; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+  #log div { padding:2px 0; border-bottom:1px solid #1c2128; }
+  .alert { color:var(--down); } .warn { color:var(--deg); } .good { color:var(--ok); } .info { color:var(--text); } .err { color:#ff7b72; }
+  #rates { font-family:ui-monospace,Consolas,monospace; color:var(--mute); }
+  .worlds { display:grid; gap:8px; }
+  .worlds.two { grid-template-columns:1fr 1fr; }
+  .wlabel { color:var(--mute); font-size:11px; margin:2px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AEGIS-LINK · debug console</h1>
+  <span id="conn" class="pill off">disconnected</span>
+  <span id="src" class="pill">—</span>
+  <span id="ai" class="pill">AI —</span>
+  <span id="rates"></span>
+</header>
+<main>
+  <div>
+    <section>
+      <h2>Map (click to launch the selected jammer) · spectrum at CP</h2>
+      <div id="worlds" class="worlds"></div>
+    </section>
+  </div>
+  <div style="display:grid; gap:12px; align-content:start">
+    <section>
+      <h2>Controls</h2>
+      <div class="row">
+        <select id="jtype"></select>
+        <button data-cmd='{"action":"clear_jammers"}'>Clear jammers</button>
+      </div>
+      <div class="row">
+        <button data-cmd='{"action":"toggle_ai"}'>Toggle AI</button>
+        <button data-cmd='{"action":"set_view","view":"single"}'>Single</button>
+        <button data-cmd='{"action":"set_view","view":"side_by_side"}'>Side by side</button>
+      </div>
+      <div class="row">
+        <button data-cmd='{"action":"security_test","test":"tamper"}'>Tamper</button>
+        <button data-cmd='{"action":"security_test","test":"spoof"}'>Spoof</button>
+        <button data-cmd='{"action":"security_test","test":"replay"}'>Replay</button>
+        <button data-cmd='{"action":"security_test","test":"eavesdrop"}'>Eavesdrop</button>
+      </div>
+      <div class="row">
+        <button data-cmd='{"action":"run_benchmark"}'>Run benchmark</button>
+        <button data-cmd='{"action":"pause"}'>Pause</button>
+        <button data-cmd='{"action":"play"}'>Play</button>
+        <button data-cmd='{"action":"set_speed","speed":2}'>2x</button>
+        <button data-cmd='{"action":"restart"}'>Restart</button>
+      </div>
+    </section>
+    <section><h2>KPIs</h2><div id="kpis"></div></section>
+    <section><h2>Events · decisions · security</h2><div id="log"></div></section>
+  </div>
+</main>
+<script>
+(() => {
+  const B = { x:[-300,1200], y:[-400,900] };
+  const COLORS = { ok:'#3fb950', degraded:'#d29922', down:'#f85149' };
+  const worlds = {};            // world id -> {state, spectrum, canvas, spec}
+  const counts = {};            // message type -> count in the last second
+  let ws, hello = null, retry = 500;
+  const $ = id => document.getElementById(id);
+
+  function connect() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws`);
+    ws.onopen = () => { retry = 500; $('conn').textContent = 'connected'; $('conn').className = 'pill on'; };
+    ws.onclose = () => { $('conn').textContent = 'reconnecting…'; $('conn').className = 'pill off';
+                         setTimeout(connect, retry); retry = Math.min(retry * 2, 5000); };
+    ws.onmessage = ev => handle(JSON.parse(ev.data));
+  }
+
+  function send(obj) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'cmd', id: Math.random().toString(36).slice(2,8), player:'console', ...obj }));
+  }
+
+  function logLine(cls, text) {
+    const d = document.createElement('div'); d.className = cls;
+    d.textContent = new Date().toLocaleTimeString() + '  ' + text;
+    $('log').prepend(d); while ($('log').childElementCount > 200) $('log').lastChild.remove();
+  }
+
+  function ensureWorld(id) {
+    if (worlds[id]) return worlds[id];
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div class="wlabel">${id}</div><canvas width="600" height="520"></canvas><canvas width="600" height="110" style="margin-top:6px"></canvas>`;
+    $('worlds').appendChild(wrap);
+    const [map, spec] = wrap.querySelectorAll('canvas');
+    map.addEventListener('click', e => {
+      const r = map.getBoundingClientRect();
+      const x = B.x[0] + (e.clientX - r.left) / r.width * (B.x[1] - B.x[0]);
+      const y = B.y[1] - (e.clientY - r.top) / r.height * (B.y[1] - B.y[0]);
+      send({ action:'launch_jammer', jammer_type: $('jtype').value, pos:[Math.round(x), Math.round(y)] });
+    });
+    return worlds[id] = { wrap, map, spec, state:null, spectrum:null };
+  }
+
+  function handle(m) {
+    counts[m.type] = (counts[m.type] || 0) + 1;
+    switch (m.type) {
+      case 'hello':
+        hello = m; Object.assign(B, m.bounds);
+        $('src').textContent = `world: ${m.world_source} · ${m.signal_backend} · ${m.tick_hz} Hz`;
+        $('jtype').innerHTML = m.jammer_types.map(t => `<option>${t}</option>`).join('');
+        logLine('info', `hello · session ${m.session_id} · schema v${m.schema_version}`);
+        break;
+      case 'state': {
+        // drop worlds that are no longer being sent (view changed)
+        const want = m.view === 'side_by_side' ? ['ai_off','ai_on'] : ['main'];
+        for (const k of Object.keys(worlds)) if (!want.includes(k)) { worlds[k].wrap.remove(); delete worlds[k]; }
+        $('worlds').className = 'worlds' + (want.length === 2 ? ' two' : '');
+        ensureWorld(m.world).state = m;
+        $('ai').textContent = 'AI ' + (m.ai_enabled ? 'ON' : 'OFF'); $('ai').className = 'pill ' + (m.ai_enabled ? 'on' : 'off');
+        break; }
+      case 'spectrum': ensureWorld(m.world).spectrum = m; break;
+      case 'event': logLine(m.level, (m.world && m.world !== 'main' ? `[${m.world}] ` : '') + m.text); break;
+      case 'decision': logLine('good', `[${m.world}] decision: ${m.class} ${(m.confidence*100|0)}% → ${m.action}` + (m.latency_ms != null ? ` (${m.latency_ms} ms)` : '')); break;
+      case 'security': logLine(m.accepted ? 'alert' : 'good', `security ${m.test}: ${m.accepted ? 'ACCEPTED' : 'rejected'} · ${m.reason} · ct ${m.ciphertext_hex?.slice(0,24)}…`); break;
+      case 'benchmark': logLine('info', `benchmark ${m.status} ${(m.progress*100|0)}%` + (m.rows ? ` · ${m.rows.length} rows` + (m.placeholder ? ' (placeholder)' : '') : '')); break;
+      case 'score': logLine('info', 'leaderboard: ' + m.leaderboard.map(r => `${r.player} ${r.attacks}`).join(', ')); break;
+      case 'error': logLine('err', `error ${m.code}: ${m.message}`); break;
+    }
+  }
+
+  const sx = (c, x) => (x - B.x[0]) / (B.x[1] - B.x[0]) * c.width;
+  const sy = (c, y) => (B.y[1] - y) / (B.y[1] - B.y[0]) * c.height;
+
+  function drawMap(w) {
+    const c = w.map, g = c.getContext('2d'), s = w.state; if (!s) return;
+    g.clearRect(0, 0, c.width, c.height);
+    g.strokeStyle = '#1c2128'; g.lineWidth = 1;
+    for (let x = Math.ceil(B.x[0]/100)*100; x <= B.x[1]; x += 100) { g.beginPath(); g.moveTo(sx(c,x),0); g.lineTo(sx(c,x),c.height); g.stroke(); }
+    for (let y = Math.ceil(B.y[0]/100)*100; y <= B.y[1]; y += 100) { g.beginPath(); g.moveTo(0,sy(c,y)); g.lineTo(c.width,sy(c,y)); g.stroke(); }
+    const pos = Object.fromEntries(s.nodes.map(n => [n.id, n.pos]));
+    for (const l of s.links) {
+      const a = pos[l.a], b = pos[l.b]; if (!a || !b) continue;
+      g.strokeStyle = COLORS[l.status]; g.lineWidth = l.routed ? 2.5 : 1; g.setLineDash(l.routed ? [] : [4,4]);
+      g.beginPath(); g.moveTo(sx(c,a[0]), sy(c,a[1])); g.lineTo(sx(c,b[0]), sy(c,b[1])); g.stroke();
+    }
+    g.setLineDash([]);
+    for (const j of s.jammers) {
+      const x = sx(c,j.pos[0]), y = sy(c,j.pos[1]);
+      g.fillStyle = 'rgba(248,81,73,.18)'; g.beginPath(); g.arc(x, y, 40, 0, 7); g.fill();
+      g.fillStyle = '#f85149'; g.fillRect(x-5, y-5, 10, 10);
+      g.fillStyle = '#d8dee9'; g.fillText(`${j.id} ${j.type}`, x+8, y-8);
+    }
+    for (const e of (s.estimates || [])) {
+      const r = e.radius_m / (B.x[1] - B.x[0]) * c.width;
+      g.strokeStyle = '#e3b341'; g.lineWidth = 1.5; g.beginPath(); g.arc(sx(c,e.pos[0]), sy(c,e.pos[1]), r, 0, 7); g.stroke();
+    }
+    for (const n of s.nodes) {
+      const x = sx(c,n.pos[0]), y = sy(c,n.pos[1]);
+      g.fillStyle = n.kind === 'command_post' ? '#58a6ff' : n.kind === 'drone' ? '#a5d6ff' : '#c9d1d9';
+      g.beginPath();
+      if (n.kind === 'drone') { g.moveTo(x, y-7); g.lineTo(x+6, y+5); g.lineTo(x-6, y+5); } else g.rect(x-6, y-6, 12, 12);
+      g.fill(); g.fillStyle = '#8b95a5'; g.fillText(`${n.id} ch${n.channel}`, x+8, y+4);
+    }
+    const k = s.kpis;
+    g.fillStyle = '#d8dee9'; g.font = '12px system-ui';
+    g.fillText(`t=${s.sim_time_s.toFixed(1)}s  delivery ${k.delivery_pct}%  hops ${k.hops}  ${s.paused ? 'PAUSED' : s.speed + 'x'}`, 8, 16);
+  }
+
+  function drawSpectrum(w) {
+    const c = w.spec, g = c.getContext('2d'), m = w.spectrum; if (!m) return;
+    g.clearRect(0, 0, c.width, c.height);
+    const lo = -110, hi = -20, bw = c.width / m.bins.length;
+    m.bins.forEach((p, i) => {
+      const h = Math.max(0, (p - lo) / (hi - lo)) * (c.height - 18);
+      g.fillStyle = p > -80 ? '#f85149' : p > -90 ? '#d29922' : '#3b82f6';
+      g.fillRect(i * bw, c.height - h, bw - 0.5, h);
+    });
+    g.fillStyle = '#8b95a5'; g.font = '11px system-ui';
+    for (let ch = 0; ch < 8; ch++) g.fillText('ch' + ch, ch * c.width / 8 + 4, 12);
+    g.fillStyle = '#d8dee9';
+    g.fillText(`CNN: ${m.verdict} ${(m.confidence*100).toFixed(0)}%${m.gradcam ? ' · grad-cam' : ''}`, 4, 28);
+  }
+
+  function drawKpis() {
+    const id = worlds.ai_on ? 'ai_on' : 'main', s = worlds[id]?.state; if (!s) return;
+    const k = s.kpis, f = v => v == null ? '—' : v;
+    const items = [['Delivery %', k.delivery_pct], ['Hop latency ms', f(k.hop_latency_ms)], ['p95 ms', f(k.hop_latency_p95_ms)],
+                   ['Outage ms', k.outage_ms], ['Healthy links', `${k.healthy_links}/${k.total_links}`], ['Hops', k.hops],
+                   ['Verified', k.frames_verified], ['Rejected', k.frames_rejected], ['Decision ms', f(k.decision_time_ms)]];
+    $('kpis').innerHTML = `<div class="kpis">${items.map(([n,v]) => `<div class="kpi"><b>${v}</b><span>${n}</span></div>`).join('')}</div>`
+      + (worlds.ai_off ? `<div class="wlabel" style="margin-top:6px">AI OFF delivery: ${worlds.ai_off.state?.kpis.delivery_pct}% · outage ${worlds.ai_off.state?.kpis.outage_ms} ms</div>` : '');
+  }
+
+  function frame() { for (const w of Object.values(worlds)) { drawMap(w); drawSpectrum(w); } drawKpis(); requestAnimationFrame(frame); }
+
+  setInterval(() => {
+    $('rates').textContent = Object.entries(counts).map(([k,v]) => `${k}:${v}/s`).join('  ');
+    for (const k in counts) counts[k] = 0;
+  }, 1000);
+
+  document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => send(JSON.parse(b.dataset.cmd)));
+  connect(); frame();
+})();
+</script>
+</body>
+</html>
