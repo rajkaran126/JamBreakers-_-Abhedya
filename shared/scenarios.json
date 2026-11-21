@@ -1,0 +1,1513 @@
+{
+  "version": 1,
+  "notes": "Guided scenarios, one per jammer type. Coordinates in metres (x east, y north). Routes: list of [x, y]; mode 'pingpong' (back and forth), 'loop' (closed circuit) or 'static'. Node ids must come from CP, D1-D4, V1, V2 (the radios in the key loader). Jammer 'on_s'/'off_s' are seconds from scenario start. A jammer with a 'route' moves (e.g. on a hostile drone). Obstacles block signals: building -22 dB, hill -18 dB.",
+  "scenarios": [
+    {
+      "id": "border_convoy",
+      "order": 1,
+      "title": "Border convoy",
+      "subtitle": "Barrage jamming in a mountain pass",
+      "jammer": "barrage",
+      "theme": "mountain_pass",
+      "time_of_day": "night",
+      "duration_s": 90,
+      "story": "A two-vehicle convoy crosses a mountain pass near the border with two escort drones overhead. A high-power barrage jammer on the far ridge switches on and floods the whole 80 MHz band with noise.",
+      "watch": [
+        "The waterfall turns solid across every channel",
+        "AI OFF keeps hopping into noise: every channel is jammed",
+        "AI ON recognises barrage, stops hopping, raises power and drops to BPSK",
+        "The yellow ring finds the jammer on the ridge"
+      ],
+      "ai_response": "CNN → barrage. Hopping is pointless when every channel is jammed, so: +3, +6, +9 dB transmit power, then QPSK → BPSK for 3 dB more margin. Hold the channel.",
+      "expected": "Fixed hopping ≈ 30–40 % delivered · AEGIS-LINK ≈ 90 %+",
+      "camera": {
+        "pos": [
+          -380,
+          -620,
+          70
+        ],
+        "target": [
+          420,
+          230,
+          60
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "R1",
+          "kind": "hill",
+          "pos": [
+            260,
+            560
+          ],
+          "size": [
+            620,
+            200,
+            95
+          ]
+        },
+        {
+          "id": "R2",
+          "kind": "hill",
+          "pos": [
+            860,
+            -170
+          ],
+          "size": [
+            520,
+            180,
+            85
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              -40,
+              -20
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              -180,
+              -120
+            ],
+            [
+              300,
+              40
+            ],
+            [
+              700,
+              140
+            ],
+            [
+              1120,
+              300
+            ]
+          ],
+          "mode": "trip",
+          "from": "Base camp",
+          "to": "Border post",
+          "delay_s": 0,
+          "leg_s": 52
+        },
+        {
+          "id": "V2",
+          "kind": "vehicle",
+          "route": [
+            [
+              -180,
+              -120
+            ],
+            [
+              300,
+              40
+            ],
+            [
+              700,
+              140
+            ],
+            [
+              1120,
+              300
+            ]
+          ],
+          "mode": "trip",
+          "from": "Base camp",
+          "to": "Border post",
+          "delay_s": 5,
+          "leg_s": 47
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              -120,
+              -40
+            ],
+            [
+              400,
+              110
+            ],
+            [
+              900,
+              240
+            ],
+            [
+              1150,
+              330
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 10,
+          "alt": 110
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              150,
+              260
+            ],
+            [
+              600,
+              360
+            ],
+            [
+              1000,
+              140
+            ],
+            [
+              600,
+              0
+            ],
+            [
+              150,
+              260
+            ]
+          ],
+          "mode": "loop",
+          "speed": 14,
+          "alt": 140
+        },
+        {
+          "id": "D3",
+          "kind": "drone",
+          "route": [
+            [
+              560,
+              120
+            ]
+          ],
+          "mode": "static",
+          "alt": 160
+        }
+      ],
+      "jammers": [
+        {
+          "type": "barrage",
+          "pos": [
+            380,
+            560,
+            92
+          ],
+          "power_dbm": 58,
+          "on_s": 15,
+          "label": "jammer on the ridge"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Convoy enters the pass. Escort drones overhead, every link green."
+        },
+        {
+          "t": 15,
+          "text": "A barrage jammer on the ridge switches on: noise over all 8 channels."
+        },
+        {
+          "t": 22,
+          "text": "AI OFF: fixed hopping keeps hopping, but every channel is jammed.",
+          "show": "ai_off"
+        },
+        {
+          "t": 30,
+          "text": "AI ON: CNN says 'barrage'. Hopping is pointless, so it raises power and drops to BPSK.",
+          "show": "ai_on"
+        },
+        {
+          "t": 55,
+          "text": "The AI also locates the jammer from signal strength: the yellow ring on the ridge."
+        },
+        {
+          "t": 78,
+          "text": "Same attack, same seed. Only the defence differs: switch AI OFF / ON to compare delivery."
+        }
+      ]
+    },
+    {
+      "id": "urban_patrol",
+      "order": 2,
+      "title": "Urban patrol",
+      "subtitle": "Random-channel jammer hidden in a building",
+      "jammer": "random",
+      "theme": "city",
+      "time_of_day": "dusk",
+      "duration_s": 90,
+      "story": "Drones and a patrol vehicle cover a town at dusk. A jammer hidden on a rooftop jumps between 3 random channels, re-picking every 0.4–1.5 seconds. Buildings also block some links.",
+      "watch": [
+        "Three bright blocks move around the spectrum",
+        "AI OFF's fixed pattern keeps landing on jammed channels",
+        "AI ON blacklists the occupied channels and hops to the cleanest one, again after every re-pick",
+        "Buildings block links: the mesh reroutes through the drones"
+      ],
+      "ai_response": "CNN → random. Blacklist the channels it occupies (3 s), hop to the quietest channel left. Each time the jammer re-picks, repeat, in about 20 ms.",
+      "expected": "Fixed hopping ≈ 65–70 % · AEGIS-LINK ≈ 97 %+",
+      "camera": {
+        "pos": [
+          -330,
+          -560,
+          120
+        ],
+        "target": [
+          450,
+          260,
+          40
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "B1",
+          "kind": "building",
+          "pos": [
+            250,
+            200
+          ],
+          "size": [
+            80,
+            60,
+            46
+          ]
+        },
+        {
+          "id": "B2",
+          "kind": "building",
+          "pos": [
+            470,
+            360
+          ],
+          "size": [
+            70,
+            70,
+            62
+          ]
+        },
+        {
+          "id": "B3",
+          "kind": "building",
+          "pos": [
+            680,
+            160
+          ],
+          "size": [
+            90,
+            60,
+            36
+          ]
+        },
+        {
+          "id": "B4",
+          "kind": "building",
+          "pos": [
+            360,
+            -40
+          ],
+          "size": [
+            60,
+            80,
+            30
+          ]
+        },
+        {
+          "id": "B5",
+          "kind": "building",
+          "pos": [
+            820,
+            420
+          ],
+          "size": [
+            70,
+            70,
+            52
+          ]
+        },
+        {
+          "id": "B6",
+          "kind": "building",
+          "pos": [
+            140,
+            460
+          ],
+          "size": [
+            60,
+            60,
+            42
+          ]
+        },
+        {
+          "id": "B7",
+          "kind": "building",
+          "pos": [
+            600,
+            -120
+          ],
+          "size": [
+            80,
+            50,
+            28
+          ]
+        },
+        {
+          "id": "B8",
+          "kind": "building",
+          "pos": [
+            960,
+            140
+          ],
+          "size": [
+            60,
+            90,
+            40
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              0,
+              0
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              120,
+              100
+            ],
+            [
+              880,
+              100
+            ],
+            [
+              880,
+              540
+            ],
+            [
+              120,
+              540
+            ]
+          ],
+          "mode": "loop",
+          "speed": 13,
+          "alt": 95
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              560,
+              260
+            ],
+            [
+              760,
+              300
+            ],
+            [
+              560,
+              480
+            ],
+            [
+              360,
+              300
+            ]
+          ],
+          "mode": "loop",
+          "speed": 11,
+          "alt": 120
+        },
+        {
+          "id": "D3",
+          "kind": "drone",
+          "route": [
+            [
+              300,
+              280
+            ]
+          ],
+          "mode": "static",
+          "alt": 140
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              40,
+              280
+            ],
+            [
+              540,
+              280
+            ],
+            [
+              600,
+              280
+            ],
+            [
+              600,
+              340
+            ],
+            [
+              600,
+              620
+            ],
+            [
+              1050,
+              620
+            ]
+          ],
+          "mode": "trip",
+          "from": "Police station",
+          "to": "Market square",
+          "delay_s": 0,
+          "leg_s": 52
+        },
+        {
+          "id": "V2",
+          "kind": "vehicle",
+          "route": [
+            [
+              -160,
+              60
+            ],
+            [
+              1050,
+              60
+            ]
+          ],
+          "mode": "trip",
+          "from": "Bus depot",
+          "to": "East gate",
+          "delay_s": 0,
+          "leg_s": 52
+        }
+      ],
+      "jammers": [
+        {
+          "type": "random",
+          "pos": [
+            470,
+            360,
+            64
+          ],
+          "power_dbm": 38,
+          "on_s": 12,
+          "label": "rooftop jammer"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Patrol over town. Note the mesh: some links hop through drones to get around buildings."
+        },
+        {
+          "t": 12,
+          "text": "A rooftop jammer starts hitting 3 random channels, re-picking every ~1 s."
+        },
+        {
+          "t": 20,
+          "text": "AI OFF: the fixed hop pattern keeps visiting jammed channels (3 of 8 = lost).",
+          "show": "ai_off"
+        },
+        {
+          "t": 28,
+          "text": "AI ON: CNN says 'random'. It blacklists the occupied channels and hops to the cleanest.",
+          "show": "ai_on"
+        },
+        {
+          "t": 50,
+          "text": "Every re-pick: the AI re-blacklists and hops again in ~20 ms. Watch the decision log."
+        },
+        {
+          "t": 78,
+          "text": "Same attack, same seed. Switch AI OFF / ON to compare delivery."
+        }
+      ]
+    },
+    {
+      "id": "coastal_watch",
+      "order": 3,
+      "title": "Coastal watch",
+      "subtitle": "Sweep jammer on a ship offshore",
+      "jammer": "sweep",
+      "theme": "coast",
+      "time_of_day": "dusk",
+      "duration_s": 90,
+      "story": "Surveillance drones patrol a coastline from a shore station. A ship offshore runs a sweep jammer that races across the whole band about 800 times a second.",
+      "watch": [
+        "A diagonal tone races across the spectrum",
+        "Hopping cannot escape it, because it visits every channel",
+        "AI ON holds the channel and raises power instead of thrashing",
+        "An energy detector would hop non-stop here; the CNN knows better"
+      ],
+      "ai_response": "CNN → sweep. It crosses every channel, so hopping only thrashes: hold the channel, raise power to +9 dB, then BPSK.",
+      "expected": "Fixed hopping ≈ 25–40 % · AEGIS-LINK ≈ 85–95 %",
+      "camera": {
+        "pos": [
+          -420,
+          -560,
+          80
+        ],
+        "target": [
+          430,
+          380,
+          40
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "LH",
+          "kind": "building",
+          "pos": [
+            260,
+            520
+          ],
+          "size": [
+            22,
+            22,
+            45
+          ]
+        },
+        {
+          "id": "HB",
+          "kind": "building",
+          "pos": [
+            -60,
+            80
+          ],
+          "size": [
+            50,
+            40,
+            18
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              0,
+              0
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              -150,
+              430
+            ],
+            [
+              1150,
+              430
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 14,
+          "alt": 120
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              1150,
+              520
+            ],
+            [
+              -150,
+              520
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 12,
+          "alt": 140
+        },
+        {
+          "id": "D3",
+          "kind": "drone",
+          "route": [
+            [
+              500,
+              250
+            ],
+            [
+              800,
+              300
+            ],
+            [
+              500,
+              350
+            ],
+            [
+              200,
+              300
+            ]
+          ],
+          "mode": "loop",
+          "speed": 10,
+          "alt": 100
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              -200,
+              -180
+            ],
+            [
+              1100,
+              -180
+            ]
+          ],
+          "mode": "trip",
+          "from": "Harbour",
+          "to": "Coast radar",
+          "delay_s": 0,
+          "leg_s": 52
+        }
+      ],
+      "jammers": [
+        {
+          "type": "sweep",
+          "pos": [
+            720,
+            840,
+            8
+          ],
+          "power_dbm": 41,
+          "on_s": 15,
+          "label": "ship-borne sweep"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Coastal patrol from the shore station. All quiet."
+        },
+        {
+          "t": 15,
+          "text": "A ship offshore starts a sweep jammer: a tone racing across all 80 MHz ~800 times a second."
+        },
+        {
+          "t": 22,
+          "text": "AI OFF: every channel gets hit as the sweep passes, so hopping cannot escape.",
+          "show": "ai_off"
+        },
+        {
+          "t": 30,
+          "text": "AI ON: CNN says 'sweep'. It holds the channel, raises power and drops to BPSK.",
+          "show": "ai_on"
+        },
+        {
+          "t": 55,
+          "text": "A plain energy detector would hop here forever (thrashing). The classifier avoids that."
+        },
+        {
+          "t": 78,
+          "text": "Same attack, same seed. Switch AI OFF / ON to compare delivery."
+        }
+      ]
+    },
+    {
+      "id": "forest_ambush",
+      "order": 4,
+      "title": "Forest ambush",
+      "subtitle": "Reactive jammer that fires only when it hears us",
+      "jammer": "reactive",
+      "theme": "forest",
+      "time_of_day": "night",
+      "duration_s": 90,
+      "story": "A convoy moves along a forest road at night with drones overhead. A reactive jammer hidden in the trees stays silent until it hears our packets, then fires on that channel. If it goes quiet, it scans for us.",
+      "watch": [
+        "The jammer is invisible until we transmit, then appears on our channel",
+        "AI ON switches to key-derived fast hopping",
+        "It blacklists the channel the jammer is listening on, so the jammer rarely hears us again"
+      ],
+      "ai_response": "CNN → reactive (its energy starts mid-packet). Switch to HMAC keyed hopping (new channel every 10 ms) and blacklist the channel it listens on.",
+      "expected": "Fixed hopping ≈ 85–88 % · AEGIS-LINK ≈ 93–95 %",
+      "camera": {
+        "pos": [
+          -360,
+          -540,
+          75
+        ],
+        "target": [
+          450,
+          220,
+          40
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "K1",
+          "kind": "hill",
+          "pos": [
+            900,
+            560
+          ],
+          "size": [
+            300,
+            220,
+            70
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              0,
+              0
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              -150,
+              120
+            ],
+            [
+              300,
+              200
+            ],
+            [
+              700,
+              160
+            ],
+            [
+              1100,
+              260
+            ]
+          ],
+          "mode": "trip",
+          "from": "Ranger post",
+          "to": "Forward camp",
+          "delay_s": 0,
+          "leg_s": 52
+        },
+        {
+          "id": "V2",
+          "kind": "vehicle",
+          "route": [
+            [
+              -150,
+              120
+            ],
+            [
+              300,
+              200
+            ],
+            [
+              700,
+              160
+            ],
+            [
+              1100,
+              260
+            ]
+          ],
+          "mode": "trip",
+          "from": "Ranger post",
+          "to": "Forward camp",
+          "delay_s": 5,
+          "leg_s": 47
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              -100,
+              180
+            ],
+            [
+              500,
+              260
+            ],
+            [
+              1050,
+              260
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 10,
+          "alt": 100
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              400,
+              420
+            ],
+            [
+              700,
+              420
+            ],
+            [
+              700,
+              0
+            ],
+            [
+              400,
+              0
+            ]
+          ],
+          "mode": "loop",
+          "speed": 12,
+          "alt": 130
+        }
+      ],
+      "jammers": [
+        {
+          "type": "reactive",
+          "pos": [
+            520,
+            120
+          ],
+          "power_dbm": 36,
+          "on_s": 15,
+          "label": "hidden reactive jammer"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Night convoy on a forest road. The jammer is already there, but silent."
+        },
+        {
+          "t": 15,
+          "text": "The reactive jammer starts listening. When it hears a packet on its channel, it fires."
+        },
+        {
+          "t": 22,
+          "text": "AI OFF: whenever the fixed pattern visits the jammer's channel, that slot is lost.",
+          "show": "ai_off"
+        },
+        {
+          "t": 30,
+          "text": "AI ON: CNN says 'reactive'. Keyed fast hopping, and blacklist where it listens.",
+          "show": "ai_on"
+        },
+        {
+          "t": 55,
+          "text": "The jammer scans to re-find us; each time, the AI blacklists that channel too."
+        },
+        {
+          "t": 78,
+          "text": "Same attack, same seed. Switch AI OFF / ON to compare delivery."
+        }
+      ]
+    },
+    {
+      "id": "airbase_spoof",
+      "order": 5,
+      "title": "Airbase spoofing",
+      "subtitle": "Deceptive jammer injecting fake commands",
+      "jammer": "deceptive",
+      "theme": "airbase",
+      "time_of_day": "night",
+      "duration_s": 90,
+      "story": "Drones fly circuits from a forward airstrip. An intruder near the hangars transmits look-alike frames using our modulation, trying to inject fake commands and collide with real traffic.",
+      "watch": [
+        "The security panel: 'forged' climbs while 'accepted' stays 0",
+        "Every forged frame fails AES-256-GCM authentication",
+        "AI ON recognises 'deceptive', hops away and blacklists that channel",
+        "Press Spoof or Replay to show it live"
+      ],
+      "ai_response": "CNN → deceptive. Authentication already rejects the forged frames; to stop the collisions too, hop away and blacklist that channel for 15 s.",
+      "expected": "Fixed hopping ≈ 90 % (but forged frames keep arriving) · AEGIS-LINK ≈ 99.8 % · forged frames accepted: 0",
+      "camera": {
+        "pos": [
+          -420,
+          -480,
+          70
+        ],
+        "target": [
+          420,
+          180,
+          40
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "H1",
+          "kind": "building",
+          "pos": [
+            260,
+            -160
+          ],
+          "size": [
+            120,
+            60,
+            26
+          ]
+        },
+        {
+          "id": "H2",
+          "kind": "building",
+          "pos": [
+            420,
+            -160
+          ],
+          "size": [
+            120,
+            60,
+            26
+          ]
+        },
+        {
+          "id": "TW",
+          "kind": "building",
+          "pos": [
+            -70,
+            90
+          ],
+          "size": [
+            16,
+            16,
+            38
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              0,
+              0
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              0,
+              150
+            ],
+            [
+              1100,
+              150
+            ],
+            [
+              1100,
+              450
+            ],
+            [
+              0,
+              450
+            ]
+          ],
+          "mode": "loop",
+          "speed": 16,
+          "alt": 120
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              1100,
+              450
+            ],
+            [
+              0,
+              450
+            ],
+            [
+              0,
+              150
+            ],
+            [
+              1100,
+              150
+            ]
+          ],
+          "mode": "loop",
+          "speed": 14,
+          "alt": 150
+        },
+        {
+          "id": "D3",
+          "kind": "drone",
+          "route": [
+            [
+              600,
+              300
+            ]
+          ],
+          "mode": "static",
+          "alt": 90
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              -180,
+              40
+            ],
+            [
+              1000,
+              40
+            ]
+          ],
+          "mode": "trip",
+          "from": "Hangar",
+          "to": "Fuel depot",
+          "delay_s": 0,
+          "leg_s": 52
+        }
+      ],
+      "jammers": [
+        {
+          "type": "deceptive",
+          "pos": [
+            190,
+            -60
+          ],
+          "power_dbm": 33,
+          "on_s": 15,
+          "label": "spoofer by the hangars"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Drones fly circuits over the airstrip. Every frame is sealed with AES-256-GCM."
+        },
+        {
+          "t": 15,
+          "text": "A spoofer near the hangars starts sending look-alike frames: fake commands."
+        },
+        {
+          "t": 22,
+          "text": "Security panel: forged frames arrive and every one fails authentication ('accepted' stays 0)."
+        },
+        {
+          "t": 30,
+          "text": "AI ON: CNN says 'deceptive'. It hops away and blacklists that channel.",
+          "show": "ai_on"
+        },
+        {
+          "t": 50,
+          "text": "AI OFF: its fixed pattern keeps returning to the spoofer's channel.",
+          "show": "ai_off"
+        },
+        {
+          "t": 75,
+          "text": "Try it: press Spoof or Replay in the security panel."
+        }
+      ]
+    },
+    {
+      "id": "relief_camp",
+      "order": 6,
+      "title": "Relief camp",
+      "subtitle": "Accidental interference from friendly equipment",
+      "jammer": "accidental",
+      "theme": "camp",
+      "time_of_day": "day",
+      "duration_s": 90,
+      "story": "After a flood, drones survey a relief camp. A relief agency's Wi-Fi equipment next to the command tent starts bursty transmissions on our channel. It is interference, but not an attack.",
+      "watch": [
+        "Short flat-topped bursts on our channel",
+        "The CNN says 'accidental', not a jammer",
+        "No alarm and no power escalation: the AI quietly moves to a clean channel"
+      ],
+      "ai_response": "CNN → accidental. Friendly emitter, so no alert and no escalation. Move quietly to a clean channel and avoid that one for 6 s.",
+      "expected": "Both stay high (≈ 98–100 %). The point: the AI does not over-react.",
+      "camera": {
+        "pos": [
+          -380,
+          -520,
+          85
+        ],
+        "target": [
+          400,
+          200,
+          30
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "T1",
+          "kind": "building",
+          "pos": [
+            160,
+            120
+          ],
+          "size": [
+            40,
+            30,
+            8
+          ]
+        },
+        {
+          "id": "T2",
+          "kind": "building",
+          "pos": [
+            240,
+            60
+          ],
+          "size": [
+            40,
+            30,
+            8
+          ]
+        },
+        {
+          "id": "SC",
+          "kind": "building",
+          "pos": [
+            520,
+            380
+          ],
+          "size": [
+            60,
+            40,
+            14
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              0,
+              0
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              100,
+              300
+            ],
+            [
+              1000,
+              300
+            ],
+            [
+              1000,
+              700
+            ],
+            [
+              100,
+              700
+            ]
+          ],
+          "mode": "loop",
+          "speed": 12,
+          "alt": 110
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              900,
+              -100
+            ],
+            [
+              300,
+              500
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 10,
+          "alt": 90
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              -150,
+              -150
+            ],
+            [
+              1050,
+              250
+            ]
+          ],
+          "mode": "trip",
+          "from": "Supply hub",
+          "to": "Relief camp",
+          "delay_s": 0,
+          "leg_s": 52
+        }
+      ],
+      "jammers": [
+        {
+          "type": "accidental",
+          "pos": [
+            60,
+            40
+          ],
+          "power_dbm": 22,
+          "on_s": 14,
+          "label": "NGO Wi-Fi"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Drones survey the camp. All green."
+        },
+        {
+          "t": 14,
+          "text": "Relief Wi-Fi next to the command tent starts bursty traffic on our channel."
+        },
+        {
+          "t": 22,
+          "text": "AI ON: CNN says 'accidental'. Friendly, so no alarm and no power escalation.",
+          "show": "ai_on"
+        },
+        {
+          "t": 31,
+          "text": "It quietly moves to a clean channel. That restraint matters: no false alarms in a crowded band."
+        },
+        {
+          "t": 76,
+          "text": "AI OFF and AI ON both stay high; the AI simply avoided over-reacting."
+        }
+      ]
+    },
+    {
+      "id": "drone_delivery",
+      "order": 7,
+      "title": "Drone delivery",
+      "subtitle": "Follower jammer on a hostile drone",
+      "jammer": "follower",
+      "theme": "desert",
+      "time_of_day": "sunset",
+      "duration_s": 90,
+      "story": "A medical-delivery drone crosses the desert to a village. A hostile drone carrying a follower jammer chases it: it re-tunes to our channel about 25 ms after each hop and learns repeating hop patterns.",
+      "watch": [
+        "The hostile drone (red) shadows the delivery drone",
+        "AI OFF: the fixed hop pattern is learned, so the follower jams almost every slot",
+        "AI ON: 're-found within 30 ms, so it is following us' → key-derived hopping",
+        "The follower cannot predict HMAC(key, slot) and never catches up"
+      ],
+      "ai_response": "Behaviour, not just the CNN: the jammer re-finds our new channel within 30 ms, so it is a follower. Switch to HMAC keyed hopping that never reuses the last 3 channels.",
+      "expected": "Fixed hopping ≈ 10–15 % · AEGIS-LINK ≈ 99 %",
+      "camera": {
+        "pos": [
+          -480,
+          -560,
+          90
+        ],
+        "target": [
+          450,
+          260,
+          70
+        ]
+      },
+      "obstacles": [
+        {
+          "id": "VL",
+          "kind": "building",
+          "pos": [
+            1080,
+            760
+          ],
+          "size": [
+            70,
+            50,
+            12
+          ]
+        },
+        {
+          "id": "D",
+          "kind": "hill",
+          "pos": [
+            560,
+            -60
+          ],
+          "size": [
+            320,
+            200,
+            45
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "id": "CP",
+          "kind": "command_post",
+          "route": [
+            [
+              -120,
+              -200
+            ]
+          ],
+          "mode": "static"
+        },
+        {
+          "id": "D1",
+          "kind": "drone",
+          "route": [
+            [
+              -80,
+              -150
+            ],
+            [
+              400,
+              200
+            ],
+            [
+              1050,
+              720
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 15,
+          "alt": 100
+        },
+        {
+          "id": "D2",
+          "kind": "drone",
+          "route": [
+            [
+              -40,
+              -100
+            ],
+            [
+              450,
+              260
+            ],
+            [
+              1000,
+              680
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 15,
+          "alt": 140,
+          "offset_m": 60
+        },
+        {
+          "id": "D3",
+          "kind": "drone",
+          "route": [
+            [
+              500,
+              250
+            ]
+          ],
+          "mode": "static",
+          "alt": 180
+        },
+        {
+          "id": "V1",
+          "kind": "vehicle",
+          "route": [
+            [
+              1040,
+              700
+            ]
+          ],
+          "mode": "static"
+        }
+      ],
+      "jammers": [
+        {
+          "type": "follower",
+          "route": [
+            [
+              -120,
+              -40
+            ],
+            [
+              380,
+              300
+            ],
+            [
+              1000,
+              760
+            ]
+          ],
+          "mode": "pingpong",
+          "speed": 15,
+          "alt": 90,
+          "offset_m": -140,
+          "power_dbm": 35,
+          "on_s": 11,
+          "label": "hostile drone"
+        }
+      ],
+      "steps": [
+        {
+          "t": 0,
+          "text": "Delivery drone D1 sets off with escort D2 and relay D3."
+        },
+        {
+          "t": 11,
+          "text": "A hostile drone switches on its follower jammer and shadows the delivery."
+        },
+        {
+          "t": 18,
+          "text": "AI OFF: fixed hopping repeats a pattern; the follower learns it and jams almost every slot.",
+          "show": "ai_off"
+        },
+        {
+          "t": 25,
+          "text": "AI ON: the jammer re-found our channel within 30 ms, so it is following us.",
+          "show": "ai_on"
+        },
+        {
+          "t": 32,
+          "text": "Switch to HMAC(key, slot) hopping that never reuses the last 3 channels: unpredictable."
+        },
+        {
+          "t": 79,
+          "text": "Same attack, same seed. Switch AI OFF / ON to compare delivery."
+        }
+      ]
+    }
+  ]
+}
