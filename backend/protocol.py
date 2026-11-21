@@ -20,10 +20,10 @@ F_STOP_MHZ = CHANNELS_MHZ[-1] + 5.0
 ARENA_BOUNDS = {"x": [-300.0, 1200.0], "y": [-400.0, 900.0]}
 STUDIO_BOUNDS = {"x": [-200.0, 1400.0], "y": [-400.0, 1000.0]}
 
-JAMMER_TYPES = ["barrage", "random", "sweep", "reactive", "deceptive", "accidental", "follower", "smart"]
+JAMMER_TYPES = ["barrage", "random", "sweep", "reactive", "deceptive", "accidental", "follower", "smart", "novel"]
 CNN_CLASSES = ["clean", "barrage", "random", "sweep", "reactive", "deceptive", "accidental"]
-SECURITY_TESTS = ["tamper", "spoof", "replay", "eavesdrop"]
-SCENARIOS = ["border_convoy", "disaster_zone", "drone_delivery"]
+SECURITY_TESTS = ["legit", "tamper", "spoof", "replay", "eavesdrop", "desync", "impersonate", "capture", "reboot", "clock_loss"]
+SCENARIOS = ["border_convoy", "urban_patrol", "coastal_watch", "forest_ambush", "airbase_spoof", "relief_camp", "drone_delivery"]
 
 
 def envelope(msg_type: str, src: str = "server", **payload: Any) -> dict[str, Any]:

@@ -5,3 +5,6 @@
 .pytest_cache
 tests
 results
+ai/data
+mobile/src
+mobile/public

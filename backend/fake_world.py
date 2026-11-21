@@ -430,11 +430,12 @@ class FakeArena:
             "spoof": "Rejected: sender not keyed with the mission key, tag invalid. [placeholder]",
             "replay": "Rejected: sequence number already seen inside the 64-frame replay window. [placeholder]",
             "eavesdrop": "Attacker sees only ciphertext; nothing learnt without the key. [placeholder]",
+            "legit": "Genuine frame verified. [placeholder]",
         }
         for w in self.worlds.values():
             if test != "eavesdrop":
                 w.frames_rejected += 1
-        msg = envelope("security", SRC, test=test, accepted=False, reason=reasons[test], header_hex=header,
+        msg = envelope("security", SRC, test=test, accepted=test == "legit", reason=reasons[test], header_hex=header,
                        ciphertext_hex=ct, **rid)
         if test == "eavesdrop":
             msg["plaintext_hint"] = "unreadable"
