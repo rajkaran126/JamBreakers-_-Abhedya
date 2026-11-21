@@ -63,7 +63,8 @@ class CNN:
         pr = np.exp(z - z.max())
         pr /= pr.sum()
         k = int(np.argmax(pr))
-        out = {"probs": pr, "class": self.classes[k], "confidence": float(pr[k])}
+        out = {"probs": pr, "class": self.classes[k], "confidence": float(pr[k]), "k": k,
+               "emb": a.mean(axis=(1, 2))}                   # the fingerprint used by the open-set check (ai/ood.py)
         if with_cam:
             out["cam"] = self.gradcam(a, k)
         out["ms"] = (time.perf_counter() - t0) * 1000
@@ -84,7 +85,8 @@ class CNN:
         pr = np.mean([r["probs"] for r in res], axis=0)
         k = int(np.argmax(pr))
         return {"probs": pr, "class": self.classes[k], "confidence": float(pr[k]),
-                "votes": [r["class"] for r in res], "ms": (time.perf_counter() - t0) * 1000}
+                "votes": [r["class"] for r in res], "embs": [r["emb"] for r in res], "ks": [r["k"] for r in res],
+                "ms": (time.perf_counter() - t0) * 1000}
 
 
 _shared: Optional[CNN] = None

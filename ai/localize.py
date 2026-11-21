@@ -20,6 +20,9 @@ NLOS_DB = 8.0
 PUBLISH_RADIUS_M = 300.0
 ANNOUNCE_RADIUS_M = 150.0
 CHI2_2DOF_95 = 5.991
+# 95 % F quantiles F(2, dof): with the noise level estimated from only a few residuals (4-8 radios, 3 unknowns)
+# the chi-square radius is too small; 2 x F(2, dof) is the honest multiplier (it tends to chi-square for many dof)
+F2_95 = {1: 199.5, 2: 19.0, 3: 9.55, 4: 6.94, 5: 5.79, 6: 5.14, 7: 4.74, 8: 4.46, 9: 4.26, 10: 4.10}
 JAMMER_Z = 2.0
 
 
@@ -98,7 +101,8 @@ def locate(positions: np.ndarray, rssi_dbm: np.ndarray, bounds, exponents: Optio
     sigma2 = max(float(res @ res) / dof, MEAS_SIGMA2_MIN)
     try:
         cov = sigma2 * np.linalg.inv(J.T @ J)[:2, :2]
-        radius = float(np.sqrt(CHI2_2DOF_95 * np.max(np.linalg.eigvalsh(cov))))
+        mult = 2 * F2_95.get(dof, 3.0 + 6.0 / dof) if dof <= 10 else CHI2_2DOF_95 * (1 + 2.0 / dof)
+        radius = float(np.sqrt(mult * np.max(np.linalg.eigvalsh(cov))))
     except np.linalg.LinAlgError:
         return None
     if not np.isfinite(radius):

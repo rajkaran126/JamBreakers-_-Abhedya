@@ -11,3 +11,8 @@
 | `weights/` | Trained weights (committed) and `report.json` |
 
 `data/` is generated and not committed.
+
+## RL hopping agent (Phase 6)
+
+`rl.py`: tabular Q-learning agent (256 states x 5 moves: stay, hop, keyed, power, calm) trained in the simulator
+from packet loss and channel energy only. `python -m ai.rl --train` writes `weights/rl_q.json`. Benchmark row `rl`.
