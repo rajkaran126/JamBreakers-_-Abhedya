@@ -3,18 +3,51 @@
 AI-enabled adaptive anti-jamming for tactical drone and vehicle networks.
 Team JamBreakers · BITS2WAVE round 2 · SW-26 (software track).
 
-> **Status: Phase 2 done.** Real radio world (GNU Radio chain tested on GNU Radio 3.10.9, NumPy
-> fallback), 7 jammers, baselines, twin worlds, plus the AI. The CNN is 95.4 % accurate on held-out
-> live windows, runs in NumPy in 1.9 ms, and comes with Grad-CAM. The defender reacts per class with
-> backups, follower detection and keyed fast hopping, and localises jammers by RSSI.
+> **Status: all phases done (0-9).** Simulated radio world with 9 jammer types including a learning
+> one and one the AI never saw, a CNN defender (94 % live accuracy, Grad-CAM, says "unknown" when it doesn't
+> know), a hybrid CNN + RL controller behind a safety guard, battery-aware drones, real AES-256-GCM on every
+> packet, 7 guided scenarios, a phone app joined by QR, and a seed-replayed benchmark where AI ON delivers
+> **95.1 %** of packets under attack (95 % CI 94.3–95.9, 10 seeds) vs **54.3 %** for conventional fixed hopping
+> ([docs/BENCHMARK.md](docs/BENCHMARK.md), robustness: [docs/ROBUSTNESS.md](docs/ROBUSTNESS.md)). All results are simulated. Demo plan: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
 ## Run
 
-**Windows (main path):** double-click `run_windows.bat`. The first run creates `.venv` and installs the packages.
+Needs **Python 3.11 or newer** (python.org; tick "Add python.exe to PATH" when installing). No Node.js,
+no internet at demo time, no GPU.
 
-**macOS / Linux:** `./run.sh`
+**Windows (main path)**
+1. Double-click `run_windows.bat`. The first run creates `.venv` and installs the packages (needs internet
+   once, 1-3 min). Later runs start in seconds and need no internet.
+2. Open **http://localhost:8000/demo** (judges' screen) or **http://localhost:8000/viewer/** (3D view).
+3. Phones: join the laptop's Wi-Fi or its Mobile hotspot, press **📱 Phone** and scan the QR code.
+
+Running it again is always safe: it stops any older AEGIS-LINK server on ports 8000/8001 first.
+
+**macOS / Linux:** `./run.sh` (same first-run behaviour; `AEGIS_PORT=8100 ./run.sh` for another port).
 
 **Docker:** `docker build -t aegis-link . && docker run --rm -p 8000:8000 aegis-link`
+(NumPy signal chain, runtime packages only. The image contents were verified by running exactly the files it
+copies with only `requirements.txt`; build it once with internet before the event.)
+
+**GNU Radio signal chain (optional):** install radioconda, then double-click `run_gnuradio.bat`. It looks for
+radioconda in the usual places; NumPy stays the default because it is ~6x faster and gives the same numbers
+(`scripts/check_gnuradio.py` compares them: within 0.5 dB).
+
+**If something goes wrong**
+
+| Symptom | Fix |
+|---|---|
+| `python` not found / venv fails | Install Python 3.11+ from python.org with "Add to PATH", delete `.venv`, run again. |
+| Phone can't open the page | Same Wi-Fi or the laptop's hotspot; allow Python through Windows Firewall on **private** networks; in the QR card try the other address buttons. |
+| QR shows "no Wi-Fi or hotspot address" | Connect the laptop to Wi-Fi or turn on Mobile hotspot, then reopen the QR card. |
+| Port 8000 busy by another program | `run_8001.bat`, then use port 8001 in every URL. |
+| Slow laptop at 4x with many jammers | **Plug the laptop in** (on battery Windows throttles the CPU 2-3x) and set Power mode to Best performance. The server slows simulated time a little by design so screens stay live; `/health` shows `tick_cpu_ms` and `overrun_ticks`. Use 1x or 2x. |
+| Server slow while the 3D view is open | Show the 3D view in **Edge or Chrome** (they use the graphics card). Embedded or remote-desktop browsers may render 3D on the CPU and starve the server. |
+| 3D view blank or very slow | Add `?q=low` to the URL (lighter graphics). |
+| Old page after an update | Ctrl+F5 (the server already sends no-cache headers). |
+
+**Tests:** `.venv\Scripts\python -m pytest -q` (Windows, or double-click `run_tests.bat`) or `.venv/bin/python -m pytest -q`: 155 tests; PyTorch
+(training only) and GNU Radio tests skip themselves when not installed.
 
 Then open:
 
@@ -26,7 +59,8 @@ Then open:
 | http://localhost:8000/api/lan | The laptop's LAN URLs (for phones and the QR code) |
 | ws://localhost:8000/ws | The one WebSocket: ~20 Hz broadcast + commands |
 | http://localhost:8000/view/ | **3D simulation view** (Three.js, vendored, works offline) |
-| /app/ | Phone app (Phase 5) |
+| http://localhost:8000/app/ | **Phone app** (React PWA); phones join by QR from the 📱 Phone button |
+| http://localhost:8000/demo | **Judges' screen**: 3D view + live phone frame + join QR |
 
 **Phones:** use the same Wi-Fi or hotspot. The server binds to `0.0.0.0`. On Windows, allow Python
 through the firewall for **private** networks.
@@ -82,6 +116,7 @@ set SIGNAL_BACKEND=gnuradio
 ```
 
 - `scripts/check_gnuradio.py` compares the two backends and times them (about 18 ms per window on GNU Radio vs 4 ms on NumPy).
+- This is a **software cross-check of the signal chain, not RF validation**. Nothing in this project has been measured on real radios yet; see *Hardware-in-the-loop* below for how we will.
 - `scripts/gr_live_demo.py [narrowband|barrage|sweep]` opens a live Qt waterfall of the chain, for showing judges.
 
 ## How the simulation works (Phase 1)
@@ -172,6 +207,153 @@ included): median 20 ms, p95 50 ms, over 509 hops.
 - **The control link must be robust.** Barrage and sweep blocked control frames for 8 s until they were sent like real control traffic: max power, BPSK, repetition coding, and a rendezvous channel that moves on every retry.
 - **Don't re-classify every 10 ms.** Under heavy jamming that cost 27 ms per slot and stalled the server. The defender now waits 50 ms after acting and 250 ms after holding, and the server never does more than 2× the normal work per tick.
 
+## Security (Phase 3)
+
+`sim/security.py` uses the audited `cryptography` library and implements no crypto of its own.
+
+- **Mission key:** 32 bytes, pre-loaded before deployment and rotated per mission (↺ in the UI starts a new mission with a new key). Only its fingerprint is ever shown.
+- **HKDF epochs:** every 60 s, HKDF-SHA256 derives fresh per-epoch keys from the mission key: `enc` for AES-256-GCM, `hop` for the HMAC hop sequence, `rdv` for the rendezvous channel. The hop sequence is therefore keyed per epoch.
+- **Frames:** 58 bytes, the same size the link budget uses. A 10-byte authenticated header (version, type, src, dst, epoch, seq), then 32 bytes of encrypted telemetry, then a 16-byte tag. The nonce is src + epoch + seq, so it is unique per key.
+- **Receiver checks:** version, then known sender, then epoch (current or previous, for clock skew), then a 64-frame replay window, then the GCM tag.
+- **Every packet in the simulation is a real frame,** sealed at the node and verified at the command post. `frames_verified` counts real verifications.
+- **Deceptive jammers inject real forged frames:** spoofed with a wrong key, or replays of recorded frames. All are rejected (`frames_forged_accepted` is tested to stay 0). In a 70 s run against fixed hopping: 491 forged, 491 rejected.
+- **Defence decisions are authenticated control frames.** They take effect only after they verify (`auth_syncs`). Lost nodes listen on the key-derived rendezvous channel to rejoin.
+
+| Button | What happens |
+|---|---|
+| Show packet | A genuine frame from D1 is verified and its telemetry decrypted |
+| Tamper | One bit flipped in the ciphertext: the GCM tag does not verify |
+| Spoof | A command "from D1" forged without the mission key: the tag does not verify |
+| Replay | An exact copy of a genuine frame resent: caught by the replay window |
+| Eavesdrop | The attacker sees only ciphertext; decrypting with a guessed key fails |
+
+Each test shows the real header and ciphertext bytes.
+
+## Benchmark (Phase 4)
+
+`python -m sim.benchmark` (or **▶ Benchmark** in the 3D view) runs every jammer type against no
+defence, fixed hopping, the energy detector and AEGIS-LINK. For each seed, all four face an identical
+seeded run, so only the defence differs. Runs go to worker processes, so the live demo never stutters.
+Results land in `results/` (JSON + CSV, plus `benchmark_latest.*`) and appear in the 3D view, where
+**📊 Results** reopens the latest without re-running. Slide numbers: [docs/BENCHMARK.md](docs/BENCHMARK.md).
+
+| 5 seeds × 7 jammers | Fixed hopping (AI OFF) | AEGIS-LINK |
+|---|---|---|
+| Mean packets delivered | 61.0 % | **96.9 %** |
+| Worst jammer type | 14.2 % | **89.2 %** |
+| Outage per attack | 4.3 s | **0.3 s** |
+| Hop latency median / p95 | — | **20 / 30 ms** |
+
+## Smart jammer, RL agent and the full benchmark (Phase 6)
+
+- **Smart jammer** (`smart` in the jammer menu, the phone's Map tab and the benchmark): an adaptive adversary.
+  Every second a UCB1 bandit picks one of five tactics: follow, predict (it learns our hop transitions), wide,
+  pulse or spoof. It scores each by how often its energy landed on our channel, using only channels it has
+  heard us on. Its label in the 3D view and on the phone shows the tactic it is using right now. It learns to
+  *predict* fixed hopping and to *follow* the energy detector; against AEGIS-LINK nothing works.
+- **RL hopping agent** (`ai/rl.py`, defender `rl`): tabular Q-learning (256 states × 5 moves) trained in this
+  simulator from packet loss and channel energy only. Retrain with `python -m ai.rl --train` (~2 min).
+- **Full benchmark**: 9 attacks × 6 defences × 10 seeds × 20 s, identical seeded runs, with SD, 95 % CI and worst run.
+  The hybrid has the best average (**95.1 %**), then AEGIS alone (94.8 %), the RL agent (94.3 %, best against the
+  smart jammer); the three AI defences overlap within their confidence intervals. Fixed hopping 54.3 %, energy
+  detector 49.2 %, no defence 39.2 %. Table and chart: [`docs/BENCHMARK.md`](docs/BENCHMARK.md);
+  re-run with `python -m sim.benchmark --seeds 10 --duration 20` and redraw with `python scripts/plot_benchmark.py`.
+- **Leaderboard**: everyone who launches jammers from a phone (with a name set) appears on the big screen.
+
+## What-if handling (Phase 8)
+
+Six questions a judge will ask, each answered in code and covered by `tests/test_phase8.py`.
+Plain-English answers for the stage are in [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+
+| Question | What the system does | Where |
+|---|---|---|
+| Battery runs out? | Battery model per drone (hover + radio power). Below 25 % it flies home, 20 s swap, relaunch; the mesh reroutes. Below 35 % the AI caps its power boost at +6 dB. | `sim/battery.py` |
+| Only 7 jammer classes? | Open-set check on the CNN's fingerprint → verdict **unknown**. Tries safe moves one by one, stores what worked in a signature memory and recalls it next time (86.8 % → 94.6 %). | `ai/ood.py`, `ai/defender.py` |
+| A drone misses the channel switch? | It notices in 30 ms and rejoins on a key-derived rendezvous channel via an authenticated beacon (~50 ms). Security → *Sync loss* shows it. | `sim/world.py` |
+| Every channel jammed? | Fallback ladder: power → BPSK → 2 s keyed-hopping test → **survival mode** (BPSK + heavy coding), no more hopping. Steps back up as the jamming eases. | `ai/defender.py` |
+| Combine the two AIs? | **Hybrid** (AI ON default): AEGIS leads, a referee gives RL a 4 s trial when delivery over 6 s drops below 93 % and keeps whichever does better. | `ai/defender.py` |
+| AI gives wrong / out-of-order orders? | **Safety guard** on every order: fixed order, contradictions removed, jammed targets corrected, limits enforced, ≤ 6 changes/s, automatic undo if delivery gets worse. | `sim/safety.py` |
+
+## Real spectrum and the mission log (Phase 9)
+
+- **Spectrum sources** (`ai/sources.py`): the CNN and the unknown-detector take a 12 x 128 dBm window over
+  2405-2485 MHz from any source. The live arena uses the simulator; the CNN panel's **Spectrum from** picker
+  replays a recording from `recordings/*.npz` instead (ten windows a second, with the running accuracy when the
+  recording is labelled). A recording is a capture, so it exercises the classifier only; the closed-loop
+  AI OFF vs AI ON benchmark stays in the simulator, where both defences face the identical attack.
+  - `python -m ai.sources convert-sweep hackrf.csv --out recordings/x.npz --label barrage --source "HackRF, lab"`
+    (`hackrf_sweep` output) · `convert-wide` (time, then one column per MHz) · `eval recordings/x.npz`
+    (verdicts per label, accuracy) · `capture --jammer sweep --out recordings/sim_x.npz` (simulator capture,
+    marked simulated). `LiveHackRF` streams a HackRF One through the same path.
+  - Every recording is resampled onto our 128 bins and its noise floor (10th percentile) aligned to our receiver.
+  - The two shipped files are **simulator captures** (sweep, and the never-seen comb → "unknown"), labelled as
+    such everywhere. Measured public datasets to add: WiFiSpectralJam (Kaggle), RF Jamming Dataset (IEEE DataPort).
+- **Mission log** (`sim/missionlog.py`): every AI decision with its reason and latency, safety-guard corrections,
+  events, security tests and a per-second score snapshot per world. **⬇ Log** in the 3D view, More → Mission
+  log on the phone, or `GET /api/mission-log` (`?format=json`). A new log starts with every scenario, restart or
+  view change; capped at 20,000 rows.
+- **Mission report** (`sim/report_html.py`): when a scenario finishes, **⬇ Download report** on the result card
+  (3D view and phone) saves `ABHEDYA_<scenario>_<date>.html` — one self-contained file that opens offline:
+  AI OFF vs AI ON headline, delivery-over-time chart, side-by-side numbers, every AI decision with its reason,
+  the raw log as a CSV inside, and **Print / Save as PDF**. Also `GET /api/report` (`?download=0` to view).
+- **Speed**: scenarios run at 1×, 2×, 4× or 10×. At 10× the spectrum panel refreshes 5 times a second instead of
+  20 and each tick may use a little more CPU; on a slow laptop simulated time slows slightly rather than freezing.
+
+## Reviewer critiques A–J (Phase 10)
+
+Ten points from the review, what we built for each, and what it measured. All numbers are simulated.
+
+| | Critique | What we built | Result |
+|---|---|---|---|
+| A | No hardware in the loop | `hil/`: one radio interface (SimBackend today, SdrBackend wiring guide), bench test, measured-vs-predicted comparison, `docs/HARDWARE_TEST_PLAN.md` (two SDRs, cabled through attenuators, nothing radiated) | Scripts run end to end on the simulator backend. **Nothing hardware-validated yet**; GNU Radio is a software cross-check only |
+| B | RF calibration | `ai/calibration.py`: start-up quiet-band calibration (gain + ripple), AGC gain taken from the radio, DC-spike removal, slow rate-limited floor tracking from quiet bins only, occupancy over the real 2.7 MHz channel (4 bins) | CNN on a receiver with ±15 dB gain error, ripple, DC spike and AGC steps: 78–91 % → 100 % correct, same as a clean receiver |
+| C | Time sync | `sim/timesync.py`: ±20 ppm clocks, 1 s beacons with drift estimation, holdover, backup master after 3 s, reboot → rendezvous resync | No sync: outside the 0.5 ms guard after 25 s. Synced ≤ 19 µs; 120 s holdover 70 µs; master loss → D1 takes over ≤ 12 µs; reboot (47 ms off) resynced in 50 ms |
+| D | Benchmark statistics | 10-seed benchmark with SD, 95 % CI and worst run; `sim/robustness.py` sweeps power, distance, speed, network size, background, stacked and unseen jammers (1,136 runs) | AI ON 95.1 % (CI 94.3–95.9) vs 54.3 %; AI ON wins all 71 conditions; weakest: 46 dBm sweep 51 %, stacked 61–89 %. Hop latency p50 20 ms, p95 110 ms (misses 100 ms at p95). `docs/ROBUSTNESS.md` |
+| E | Several / unseen jammers | `ai/behaviours.py`: multi-label tracker (wideband / tracking / narrowband / intermittent / unknown); the follower under a sweep is found with a t-test; a second unseen pattern (`novel_staircase`) | AEGIS: sweep + follower 74.9 ± 6.6 → 78.2 ± 1.8 %; three stacked 70.6 ± 9.0 → 75.0 ± 3.4 % (8 seeds). Staircase 77.8 %, flagged unknown |
+| F | Hybrid referee | Context-aware referee: stacked / volatile / steady, a separate scoreboard per context, faster judging when the attack keeps changing | smart 92.9 (AEGIS 89.0, RL 94.5); novel 93.2 (best of three) |
+| G | QoS routing | `sim/qos.py`: command / position / battery / telemetry classes with deadlines, strict priority, store-and-forward, FIFO baseline on identical links | Under sweep + follower: commands on time 87.9 vs 65.8 %; position 97.6 vs 70.6 %; 100 % of commands delivered |
+| H | Keys | `sim/keymgmt.py`: per-device keys, signed group-key grants, per-session keys with a fresh salt per join (no nonce reuse after a reboot), revocation rotates the group key | Impersonation, captured device, reboot replay: all rejected, 0 forged frames accepted |
+| I | Localisation validation | `sim/loc_eval.py`: error by jammer, position and terrain; honest F-distribution radius; fusion over time | Open field median 58 m, p95 264 m; ring correct 87 %. Fails outside the formation (≈270 m bias) — reported, not hidden |
+| J | Battery realism | Radio power counted (4 W base), return threshold from distance home + 10 % reserve (never below 25 %), low-battery drones avoided as relays | Modelled values, stated as such |
+
+Encryption does not stop jamming: it stops forged and replayed commands. Jamming is fought with hopping,
+power, modulation, routing and QoS.
+
+## Phone app and judges' screen (Phase 5)
+
+- **Phone app** (`/app/`, React PWA in `mobile/`, built copy in `mobile/dist/` so no Node.js is needed to run it):
+  Live (plain-English status, delivery gauge, AI OFF/ON, threat card, KPIs, alerts with vibration), Map (tap to launch
+  jammers, AI estimate rings), Signal (spectrum, waterfall, CNN bars, Grad-CAM), Missions (the 7 scenarios with full
+  playback control and the report), More (name, security tests with real bytes, benchmark, settings). Auto-reconnects.
+- **Join by QR:** press **📱 Phone** (or `P`) in the 3D view. Phones must be on the same Wi-Fi or the laptop's hotspot.
+- **Judges' screen:** open **`/demo`**: the 3D view, a live phone frame and a QR code side by side, plus an
+  AI OFF vs ON button and a big-QR mode (`Q`).
+- **Every screen stays in sync:** a mission started on any phone switches the big screen; scenarios load paused on the
+  briefing until someone presses Start (on any screen); the AI OFF / ON switch during a scenario flips every screen.
+
+## Guided scenarios (for the demo)
+
+Press **🎬 Scenarios** (or `S`) in the 3D view. Each scenario is one jammer type in its own environment, with its own
+obstacles (that really block signals in the simulation), unit routes, camera and time of day. It always runs side by side:
+left = AI OFF (fixed hopping), right = AI ON (AEGIS-LINK), same seed and same attack.
+
+| # | Scenario | Jammer | Environment | Expected |
+|---|---|---|---|---|
+| 1 | Border convoy | barrage | mountain pass · night | Fixed hopping ≈ 30–40 % delivered · AEGIS-LINK ≈ 90 %+ |
+| 2 | Urban patrol | random | city · dusk | Fixed hopping ≈ 65–70 % · AEGIS-LINK ≈ 97 %+ |
+| 3 | Coastal watch | sweep | coast · dusk | Fixed hopping ≈ 25–40 % · AEGIS-LINK ≈ 85–95 % |
+| 4 | Forest ambush | reactive | forest · night | Fixed hopping ≈ 85–88 % · AEGIS-LINK ≈ 93–95 % |
+| 5 | Airbase spoofing | deceptive | airbase · night | Fixed hopping ≈ 90 % (but forged frames keep arriving) · AEGIS-LINK ≈ 99.8 % · forged frames accepted: 0 |
+| 6 | Relief camp | accidental | camp · day | Both stay high (≈ 98–100 %). The point: the AI does not over-react. |
+| 7 | Drone delivery | follower | desert · sunset | Fixed hopping ≈ 10–15 % · AEGIS-LINK ≈ 99 % |
+
+While a scenario runs: a briefing card (story, what to watch, how the AI responds), a caption bar that narrates each step
+with a timeline, and **Pause / 1×-2×-4× / Replay / Exit** (Space pauses). At the end a report compares AI OFF and AI ON
+(delivery under attack, outage, hops, hop latency, forged frames accepted) and lists what the AI did, with **Next scenario**.
+
+Scenarios are data, not code: edit `shared/scenarios.json` (routes, jammers, timings, captions). `tests/test_scenarios.py`
+checks that every scenario loads, narrates every step, reports, and that AI ON beats AI OFF.
+
 ## 3D view
 
 Open `http://localhost:8000/view/`. It shows:
@@ -194,6 +376,8 @@ sim/       radio world: GNU Radio chain + NumPy fallback, jammers, baselines   (
 ai/        data generator, CNN training/inference, defender, localisation    (Phase 2)
 viewer3d/  Three.js 3D view, vendored, offline                               (Phase 5)
 mobile/    React PWA built with Vite, served at /app/                         (Phase 5)
+hil/       radio interface, bench test, measured-vs-predicted (not yet run on hardware) (Phase 10)
+recordings/ spectrum recordings for replay (the shipped ones are simulator captures)  (Phase 9)
 tests/     pytest
 scripts/   helpers (ws_probe.py)
 ```
@@ -207,9 +391,13 @@ the same.
 | Phase | Content | Owner | Status |
 |---|---|---|---|
 | 0 | Skeleton, schema, server, fake world | Kodandarama | ✅ |
-| 1 | GNU Radio + NumPy radio world, 7 jammers, baselines | Kodandarama | ✅ |
+| 1 | GNU Radio (software cross-check) + NumPy radio world, 7 jammers, baselines | Kodandarama | ✅ |
 | 2 | Data + CNN, intelligent hopping, Grad-CAM, localisation | Vishwas | ✅ |
-| 3 | AES-256-GCM, keyed hop sequence, security tests | Neha + Vishwas | |
-| 4 | Twin worlds (AI OFF/ON) + benchmark vs fixed hopping | Vishwas + Kodandarama | |
-| 5 | 3D view, React PWA, judges' screen, QR join | Akshatha, Neha | |
-| 6 | Stretch (scenarios, smart jammer, RL) + hardening | all | |
+| 3 | AES-256-GCM, keyed hop sequence, security tests | Neha + Vishwas | ✅ |
+| 4 | Twin worlds (AI OFF/ON) + benchmark vs fixed hopping | Vishwas + Kodandarama | ✅ |
+| 5 | 3D view, React PWA, judges' screen, QR join | Akshatha, Neha | ✅ |
+| 6 | Stretch (scenarios, smart jammer, RL) + hardening | all | ✅ |
+| 7 | Hardening, demo script | all | ✅ |
+| 8 | What-if handling: battery, unknown jammer, sync loss, survival mode, hybrid AI, safety guard | all | ✅ |
+| 9 | Truck trips and base camps, real-spectrum replay, mission log | all | ✅ |
+| 10 | Review fixes A–J: keys, time sync, multi-jammer, referee, QoS, calibration, localisation check, statistics, hardware test kit | all | ✅ (hardware run pending) |

@@ -1,5 +1,5 @@
 @echo off
-REM AEGIS-LINK - Windows run script. Creates .venv on first run, then starts the server.
+REM AEGIS-LINK - Windows run script. Creates .venv on first run, stops any older AEGIS-LINK server, then starts.
 cd /d "%~dp0"
 
 if not exist .venv\Scripts\python.exe (
@@ -11,9 +11,20 @@ if not exist .venv\Scripts\python.exe (
   if errorlevel 1 ( echo pip install failed. & pause & exit /b 1 )
 )
 
+REM Free ports 8000 and 8001 if an older copy of the server is still running.
+for %%P in (8000 8001) do (
+  for /f "tokens=5" %%I in ('netstat -ano ^| findstr /r /c:":%%P  *[0-9.:]*  *LISTENING"') do (
+    echo Stopping the old server on port %%P ^(PID %%I^)...
+    taskkill /PID %%I /F >nul 2>&1
+  )
+)
+
 echo.
 echo  AEGIS-LINK starting on http://localhost:8000
-echo  Phones on the same Wi-Fi/hotspot: see http://localhost:8000/api/lan
+echo    Mission deck ... http://localhost:8000/intro/   ^(start here^)
+echo    3D view ........ http://localhost:8000/viewer/
+echo    Judges' screen . http://localhost:8000/demo
+echo    Phone app ...... scan the QR code (Phone button), or see http://localhost:8000/api/lan
 echo  If phones cannot connect: allow Python through Windows Firewall on PRIVATE networks.
 echo.
 .venv\Scripts\python.exe -m uvicorn backend.app:app --host 0.0.0.0 --port 8000

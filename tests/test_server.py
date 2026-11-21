@@ -59,7 +59,7 @@ def test_lan_endpoint(client):
 
 def test_console_served(client):
     r = client.get("/")
-    assert r.status_code == 200 and "AEGIS-LINK" in r.text
+    assert r.status_code == 200 and "ABHEDYA" in r.text
 
 
 # ---------- WebSocket ----------
@@ -79,7 +79,8 @@ def test_hello_then_state_at_20hz(client):
 
 def test_every_message_matches_schema(client):
     """Drive every command and validate everything the server sends back."""
-    cmds = [{"action": "launch_jammer", "jammer_type": t, "pos": [100 + 50 * i, 80]} for i, t in enumerate(JAMMER_TYPES)]
+    cmds = [{"action": "launch_jammer", "jammer_type": "barrage", "pos": [99999, 0]}]   # off the map -> error message
+    cmds += [{"action": "launch_jammer", "jammer_type": t, "pos": [100 + 50 * i, 80]} for i, t in enumerate(JAMMER_TYPES)]
     cmds += [{"action": "toggle_ai"}, {"action": "toggle_ai", "enabled": True},
              {"action": "set_view", "view": "side_by_side"}, {"action": "run_benchmark", "seed": 7}]
     cmds += [{"action": "security_test", "test": t} for t in ["tamper", "spoof", "replay", "eavesdrop"]]
@@ -105,8 +106,8 @@ def test_every_message_matches_schema(client):
                 m = ws.receive_json()
                 assert_valid(m)
                 seen.add(m["type"])
-    expected = {"hello", "state", "spectrum", "event", "score", "error"}
-    expected |= {"security"} if client.world_kind == "fake" else {"decision"}
+    expected = {"hello", "state", "spectrum", "event", "score", "error", "security"}
+    expected |= set() if client.world_kind == "fake" else {"decision"}
     assert expected <= seen, expected - seen
     assert {"main", "ai_off", "ai_on"} <= worlds
 
@@ -146,7 +147,7 @@ GOOD = [
     {"type": "cmd", "action": "set_view", "view": "side_by_side"},
     {"type": "cmd", "action": "run_benchmark", "seed": 1, "duration_s": 30},
     {"type": "cmd", "action": "security_test", "test": "replay"},
-    {"type": "cmd", "action": "load_scenario", "name": "disaster_zone"},
+    {"type": "cmd", "action": "load_scenario", "name": "urban_patrol"},
     {"type": "cmd", "action": "exit_scenario"},
     {"type": "cmd", "action": "set_speed", "speed": 2},
     {"type": "cmd", "action": "restart", "id": "abc", "player": "judge"},
@@ -209,3 +210,40 @@ def test_fake_side_by_side_same_seed_ai_differs():
     assert len(off) == len(on) == 60
     assert not off[-1]["ai_enabled"] and on[-1]["ai_enabled"]
     assert on[-1]["kpis"]["hops"] > 0 and off[-1]["kpis"]["hops"] == 0
+
+
+def test_phone_app_and_judges_screen_are_served(client):
+    r = client.get("/app/")
+    assert r.status_code == 200 and "ABHEDYA" in r.text and "manifest.webmanifest" in r.text
+    assert client.get("/app/manifest.webmanifest").json()["start_url"] == "/app/"
+    sw = client.get("/app/sw.js")
+    assert sw.status_code == 200 and "caches" in sw.text
+    assert client.get("/app/icons/icon-512.png").status_code == 200
+    d = client.get("/demo", follow_redirects=False)
+    assert d.status_code in (302, 307) and d.headers["location"] == "/viewer/demo.html"
+    page = client.get("/viewer/demo.html")
+    assert page.status_code == 200 and "/app/" in page.text and "qrcode" in page.text
+    assert client.get("/viewer/vendor/qrcode.js").status_code == 200
+    lan = client.get("/api/lan").json()
+    assert all(u.endswith("/app/") for u in lan["app_urls"])
+
+
+def test_mission_deck_is_served_and_links_to_the_viewer(client):
+    import re
+    for path in ("/intro", "/start", "/missions"):
+        r = client.get(path, follow_redirects=False)
+        assert r.status_code in (302, 307) and r.headers["location"] == "/intro/"
+    page = client.get("/intro/")
+    assert page.status_code == 200 and "Mission deck" in page.text and page.headers["cache-control"] == "no-cache"
+    js = re.search(r'src="(/intro/assets/[^"]+\.js)"', page.text).group(1)
+    bundle = client.get(js).text
+    assert "/viewer/" in bundle and "?start=" in bundle          # every slide launches the viewer
+    viewer = client.get("/viewer/app.js").text
+    assert "deepStart" in viewer and "load_scenario" in viewer      # and the viewer starts what it was given
+
+
+def test_qr_prefers_the_hotspot_and_real_wifi_over_virtual_adapters():
+    from backend.app import _lan_rank
+    ips = ["172.24.80.1", "192.168.56.1", "10.110.21.15", "192.168.137.1", "192.168.1.7"]
+    assert sorted(ips, key=_lan_rank)[:2] == ["192.168.137.1", "192.168.1.7"]
+    assert sorted(ips, key=_lan_rank)[-2:] == ["172.24.80.1", "192.168.56.1"]

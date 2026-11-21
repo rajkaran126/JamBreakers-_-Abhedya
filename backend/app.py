@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
@@ -87,7 +87,8 @@ class Hub:
             last = now
             try:
                 async with self.lock:
-                    msgs = self.world.step(min(dt, 0.25))
+                    # in a worker thread, so WebSocket I/O (phones, screens) keeps flowing while the slots run
+                    msgs = await asyncio.to_thread(self.world.step, min(dt, 0.25))
                 self.broadcast(msgs)
             except Exception:  # never let one bad tick kill the broadcast
                 log.exception("world.step failed")
@@ -139,7 +140,25 @@ def lan_addresses() -> list[str]:
     with contextlib.suppress(OSError):
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             ips.add(info[4][0])
-    return sorted(ip for ip in ips if not ip.startswith("127."))
+    return sorted((ip for ip in ips if not ip.startswith(("127.", "169.254."))), key=_lan_rank)
+
+
+def _lan_rank(ip: str) -> tuple[int, str]:
+    """Order addresses so the QR code shows the one phones can most likely reach first:
+    the Windows mobile hotspot, then home/office Wi-Fi ranges, and virtual adapters (WSL, Docker,
+    Hyper-V, VirtualBox usually sit in 172.16-31 or 192.168.56) last."""
+    a, b = (int(x) for x in ip.split(".")[:2])
+    if ip.startswith("192.168.137."):
+        return 0, ip
+    if ip.startswith("192.168.56."):
+        return 4, ip
+    if a == 192 and b == 168:
+        return 1, ip
+    if a == 10:
+        return 2, ip
+    if a == 172 and 16 <= b <= 31:
+        return 3, ip
+    return 2, ip
 
 
 def create_app(cfg: Settings | None = None, world_factory: Callable[[Settings], World] | None = None) -> FastAPI:
@@ -161,10 +180,20 @@ def create_app(cfg: Settings | None = None, world_factory: Callable[[Settings], 
     app = FastAPI(title="AEGIS-LINK", version=SERVER_VERSION, lifespan=lifespan)
     app.state.hub = hub
 
+    @app.middleware("http")
+    async def no_stale_screens(request, call_next):
+        # screens must never run a stale cached copy after an update (revalidate; 304 when unchanged)
+        response = await call_next(request)
+        if request.url.path.startswith(("/viewer", "/app", "/console", "/demo", "/intro")) or request.url.path == "/":
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     @app.get("/health")
     async def health() -> dict[str, Any]:
         return {"ok": True, "version": SERVER_VERSION, "world": cfg.world, "clients": len(hub.clients),
-                "ticks": hub.ticks, "uptime_s": round(time.time() - hub.started, 1), "session_id": hub.session_id}
+                "ticks": hub.ticks, "uptime_s": round(time.time() - hub.started, 1), "session_id": hub.session_id,
+                "overrun_ticks": getattr(hub.world, "overrun_ticks", 0),
+                "tick_cpu_ms": round(1000 * getattr(hub.world, "_cost_ema", 0.0), 1)}
 
     @app.get("/api/schema")
     async def schema() -> JSONResponse:
@@ -176,6 +205,61 @@ def create_app(cfg: Settings | None = None, world_factory: Callable[[Settings], 
         return {"port": cfg.port, "ips": ips,
                 "app_urls": [f"http://{ip}:{cfg.port}/app/" for ip in ips],
                 "ws_urls": [f"ws://{ip}:{cfg.port}/ws" for ip in ips]}
+
+    @app.get("/api/scenarios")
+    async def scenarios() -> JSONResponse:
+        return JSONResponse(json.loads((ROOT / "shared" / "scenarios.json").read_text(encoding="utf-8")))
+
+    results_dir = ROOT / "results"
+
+    @app.get("/api/benchmark/latest")
+    async def bench_latest() -> JSONResponse:
+        f = results_dir / "benchmark_latest.json"
+        if not f.exists():
+            f = ROOT / "docs" / "benchmark_results.json"   # the published run ships with the repo
+        if not f.exists():
+            return JSONResponse({"detail": "No benchmark yet: press Benchmark or run python -m sim.benchmark"}, 404)
+        return JSONResponse(json.loads(f.read_text()))
+
+    @app.get("/api/recordings")
+    async def recordings() -> JSONResponse:
+        """Spectrum recordings the CNN panel can replay (recordings/*.npz, see ai/sources.py)."""
+        from ai.sources import list_recordings
+        return JSONResponse(list_recordings())
+
+    @app.get("/api/mission-log")
+    async def mission_log(format: str = "csv"):
+        """The current run's audit trail: every AI decision and its reason, safety-guard corrections,
+        events, security tests and a per-second score snapshot. ?format=csv (download) or json."""
+        lg = getattr(hub.world, "log", None)
+        if lg is None:
+            return JSONResponse({"detail": "This world keeps no mission log."}, 404)
+        if format == "json":
+            return JSONResponse(lg.to_json())
+        name = "aegis_mission_log_" + time.strftime("%Y%m%d_%H%M%S") + ".csv"
+        return Response(lg.to_csv(), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+    @app.get("/api/report")
+    async def mission_report(download: int = 1):
+        """The last finished mission as one self-contained HTML report (chart, AI OFF vs AI ON table, AI decisions,
+        raw log as CSV inside). ?download=0 opens it in the browser instead of saving it."""
+        snap = getattr(hub.world, "last_report", None)
+        if not snap:
+            return JSONResponse({"detail": "No finished mission yet: run a scenario to the end, then download its report."}, 404)
+        from sim.report_html import build_report_html
+        body = build_report_html(snap)
+        stamp = time.strftime("%Y%m%d_%H%M", time.localtime(snap.get("finished_wall", time.time())))
+        name = f"ABHEDYA_{snap['msg'].get('scenario', 'mission')}_{stamp}.html"
+        disp = "attachment" if download else "inline"
+        return Response(body, media_type="text/html; charset=utf-8",
+                        headers={"Content-Disposition": f'{disp}; filename="{name}"', "Cache-Control": "no-store"})
+
+    @app.get("/results/{name}")
+    async def result_file(name: str):
+        f = (results_dir / name).resolve()
+        if f.parent != results_dir.resolve() or f.suffix not in (".json", ".csv") or not f.exists():
+            return JSONResponse({"detail": "not found"}, 404)
+        return FileResponse(f, filename=f.name)
 
     @app.websocket("/ws")
     async def ws_endpoint(ws: WebSocket) -> None:
@@ -205,6 +289,11 @@ def create_app(cfg: Settings | None = None, world_factory: Callable[[Settings], 
                 await send_task
 
     # ---- static screens ----
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        icon = ROOT / "mobile" / "dist" / "icons" / "icon-192.png"
+        return FileResponse(icon, media_type="image/png") if icon.exists() else JSONResponse({}, 404)
+
     @app.get("/")
     async def index() -> FileResponse:
         return FileResponse(STATIC / "console.html")
@@ -216,7 +305,20 @@ def create_app(cfg: Settings | None = None, world_factory: Callable[[Settings], 
         @app.get("/viewer")
         async def view_redirect() -> RedirectResponse:
             return RedirectResponse("/viewer/")
+        @app.get("/demo")
+        @app.get("/demo/")
+        async def demo_redirect() -> RedirectResponse:
+            return RedirectResponse("/viewer/demo.html")
         app.mount("/viewer", StaticFiles(directory=viewer, html=True), name="viewer")
+
+    intro_dist = ROOT / "intro" / "dist"          # the mission deck (React + Framer Motion + 3D), the way in
+    if (intro_dist / "index.html").exists():
+        @app.get("/intro")
+        @app.get("/start")
+        @app.get("/missions")
+        async def intro_redirect() -> RedirectResponse:
+            return RedirectResponse("/intro/")
+        app.mount("/intro", StaticFiles(directory=intro_dist, html=True), name="intro")
 
     mobile_dist = ROOT / "mobile" / "dist"
     if (mobile_dist / "index.html").exists():

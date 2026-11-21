@@ -2,98 +2,198 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="/favicon.ico">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AEGIS-LINK · 3D simulation</title>
-<link rel="stylesheet" href="style.css">
+<title>ABHEDYA · 3D simulation</title>
+<link rel="stylesheet" href="style.css?v=30">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <canvas id="scene"></canvas>
 
-<!-- side-by-side captions (positioned over each viewport) -->
 <div id="split" class="hidden">
   <div class="half left"><div class="cap off">AI OFF · conventional fixed hopping</div><div class="strip" id="strip-ai_off"></div></div>
-  <div class="half right"><div class="cap on">AI ON · AEGIS-LINK</div><div class="strip" id="strip-ai_on"></div></div>
+  <div class="half right"><div class="cap on">AI ON · ABHEDYA</div><div class="strip" id="strip-ai_on"></div></div>
   <div class="divider"></div>
+</div>
+
+<div id="modebar" class="hidden">
+  <div class="seg"><button id="m-off">AI OFF<small>fixed hopping</small></button><button id="m-on">AI ON<small>ABHEDYA</small></button></div>
+  <div class="mstrip" id="m-strip"></div>
+  <div class="mcompare" id="m-compare"></div>
 </div>
 
 <div id="ui">
   <div class="leftcol">
-  <section class="card brand">
-    <h1>AEGIS-LINK</h1>
-    <span id="pill-conn" class="pill bad">offline</span>
-    <span id="pill-ai" class="pill">AI —</span>
-    <span id="pill-src" class="pill muted">—</span>
-  </section>
+    <section class="card brand">
+      <h1 class="logo-h1"><img src="abhedya_logo.png?v=1" alt="ABHEDYA"></h1>
+      <span id="pill-conn" class="pill bad">OFFLINE</span>
+      <span id="pill-ai" class="pill">AI —</span>
+      <span id="pill-src" class="pill muted">—</span>
+    </section>
 
-  <section class="card kpis" id="kpis">
-    <div><b id="k-delivery">—</b><span>packets delivered %</span></div>
-    <div><b id="k-links">—</b><span>healthy links</span></div>
-    <div><b id="k-latency">—</b><span>hop latency ms (median)</span></div>
-    <div><b id="k-outage">—</b><span>outage s</span></div>
-    <div><b id="k-decision">—</b><span>last decision ms</span></div>
-    <div><b id="k-hops">—</b><span>channel hops</span></div>
-  </section>
+    <section class="card kpis">
+      <div><b><span id="k-delivery">—</span><small>%</small></b><span>Packet delivery</span></div>
+      <div><b id="k-links">—</b><span>Healthy links</span></div>
+      <div><b><span id="k-decision">—</span><small> ms</small></b><span>Decision time</span></div>
+      <div><b id="k-hops">—</b><span>Channel hops</span></div>
+      <p class="sub" id="k-sub">hop latency — · outage 0.0 s</p>
+    </section>
 
-  <section class="card legend">
-    <div><i class="bar ok"></i>link healthy</div>
-    <div><i class="bar deg"></i>degraded</div>
-    <div><i class="bar down"></i>down</div>
-    <div><i class="dot red"></i>jammer, dome = approximate reach</div>
-    <div><i class="ring"></i>AI's estimate of jammer position</div>
-    <div><i class="dot blue"></i>packets flowing to command post</div>
-  </section>
+    <section class="card legend">
+      <div><i class="bar ok"></i>Link healthy</div>
+      <div><i class="bar deg"></i>Degraded</div>
+      <div><i class="bar down"></i>Down</div>
+      <div><i class="dot red"></i>Jammer dome ≈ approximate reach</div>
+      <div><i class="ring"></i>AI's estimate of jammer position</div>
+    </section>
 
-  <section class="card security">
-    <h2>SECURITY · AES-256-GCM</h2>
-    <p id="sec-text">Mission key fingerprint <b id="sec-fp">—</b><br>
-      verified <b id="sec-ver">0</b> · rejected <b id="sec-rej">0</b> (forged <b id="sec-forged">0</b>)</p>
-    <div class="row">
-      <button data-sec="tamper">Tamper</button><button data-sec="spoof">Spoof</button>
-      <button data-sec="replay">Replay</button><button data-sec="eavesdrop">Eavesdrop</button>
-    </div>
-    <p id="sec-result" class="small muted"></p>
-  </section>
+    <section class="card security">
+      <h2>SECURITY · AES-256-GCM</h2>
+      <p>Every frame sealed and verified. Key epoch <b id="sec-epoch">0</b> · key <b id="sec-fp">—</b><br>
+        <span class="small">Verified <b id="sec-ver">0</b> · Rejected <b id="sec-rej">0</b> (forged <b id="sec-forged">0</b>, accepted <b id="sec-fa">0</b>) · Authenticated syncs <b id="sec-sync">0</b></span></p>
+      <div class="row">
+        <button data-sec="legit">Show packet</button><button data-sec="tamper">Tamper</button><button data-sec="spoof">Spoof</button>
+        <button data-sec="replay">Replay</button><button data-sec="eavesdrop">Eavesdrop</button><button data-sec="desync" title="Make one drone miss a channel switch, then watch it rejoin">Sync loss</button><button data-sec="impersonate" title="A captured drone, with its keys, pretends to be D1">Impersonate</button><button data-sec="reboot" title="A drone reboots: its counter restarts, it gets a new session key">Reboot</button><button data-sec="capture" title="A drone is captured: revoke it and rotate the group key">Capture</button><button data-sec="clock_loss" title="The command post clock fails: holdover, then a backup time master">Clock loss</button>
+      </div>
+      <div id="sec-result" class="small muted"></div>
+    </section>
+    <section class="card lb hidden" id="lb">
+      <h2>LEADERBOARD · jammers launched</h2>
+      <ol id="lb-list"></ol>
+    </section>
   </div>
 
-  <div class="banner" id="banner">Live arena · CNN defender · <span id="banner-backend">—</span> signal chain</div>
+  <div class="banner" id="banner">Live arena · CNN defender + AES-256-GCM · <span id="banner-backend">—</span> signal chain</div>
 
   <section class="card decisions">
     <h2>LIVE DECISIONS</h2>
+    <div class="status" id="status"><i></i><span>Connecting…</span></div>
     <div id="dec-list"></div>
   </section>
 
-  <section class="card cnn">
-    <h2>CNN CLASSIFIER <span id="cnn-verdict" class="tag"></span></h2>
-    <div class="cnn-body">
-      <div id="cnn-bars"></div>
-      <canvas id="gradcam" width="320" height="120"></canvas>
-    </div>
-    <p class="small muted">Grad-CAM: where in time (rows) and frequency (columns) the CNN looked</p>
-  </section>
+  <div class="rightcol">
+    <section class="card cnn">
+      <h2>CNN CLASSIFIER <span id="cnn-verdict" class="tag"></span></h2>
+      <div class="cnn-src"><label for="cnn-src">Spectrum from</label> <select id="cnn-src" title="Feed the CNN from the live simulator or from a recorded spectrum file (recordings/)"><option value="">Live simulator</option></select></div>
+      <p class="small" id="cnn-src-note"></p>
+      <div id="cnn-behav" class="behav"></div>
+      <p class="small muted" id="cnn-hint">Switch AI ON to see what the CNN sees</p>
+      <div class="cnn-body">
+        <div id="cnn-bars"></div>
+        <canvas id="gradcam" width="320" height="120"></canvas>
+      </div>
+      <p class="small muted">Grad-CAM: where in time (rows) and frequency (columns) the CNN looked</p>
+    </section>
 
-  <section class="card spectrum">
-    <h2>SPECTRUM <span class="small muted">2405–2485 MHz at the command post</span></h2>
-    <canvas id="spec" width="520" height="70"></canvas>
-    <canvas id="waterfall" width="520" height="90"></canvas>
-  </section>
+    <section class="card spectrum">
+      <h2>SPECTRUM <span class="small muted" id="spec-sub">at the command post</span></h2>
+      <canvas id="spec" width="560" height="230"></canvas>
+      <canvas id="waterfall" width="560" height="44"></canvas>
+    </section>
+  </div>
 
   <section class="card controls">
-    <select id="jtype"></select>
+    <button id="b-deck" title="Back to the mission deck">◂ Missions</button>
+    <button id="b-scn" class="primary" title="Guided scenarios, one per jammer type">🎬 Scenarios</button>
+    <button id="b-phone" title="Join from a phone (QR code)">📱 Phone</button>
+    <span class="sep"></span>
+    <label class="lbl" for="jtype">Jammer</label>
+    <select id="jtype" title="Jammer to launch: click the ground to place it"></select>
+    <button id="b-ai" class="ai">⏻ AI on</button>
+    <button id="b-clear" title="Remove all jammers">↻ Reset</button>
+    <button id="b-bench" title="Run a new seed-replayed benchmark">▷ Benchmark</button>
+    <span class="sep"></span>
+    <button id="b-split" class="ghost" title="AI OFF vs AI ON, same attack">Side by side</button>
+    <button id="b-results" class="ghost hidden" title="Latest saved benchmark">📊 Results</button>
+    <button id="b-cam" class="ghost" title="Camera: cinematic / overview / top">🎥 Cinematic</button>
+    <button id="b-theme" class="ghost" title="Day / night">☾</button>
+    <button id="b-mission" class="ghost" title="New mission (new key, t = 0)">New mission</button>
+    <a id="b-log" class="ghost btnlink" href="/api/mission-log" download title="Download this run's mission log (every AI decision and its reason, safety-guard fixes, events, scores) as CSV">⬇ Log</a>
     <input id="player" placeholder="your name" maxlength="24">
     <span class="hint">click the ground to launch</span>
-    <button id="b-ai-on">AI ON</button>
-    <button id="b-ai-off">AI OFF</button>
-    <button id="b-split">Side by side</button>
-    <button id="b-clear">Clear jammers</button>
-    <button id="b-theme" title="Day / night">☀ / ☾</button>
-    <button id="b-bench">▶ Benchmark</button>
-    <button id="b-reset" title="Restart from t = 0">↺</button>
+  </section>
+
+  <section class="card bench hidden" id="bench">
+    <h2>SEED-REPLAYED BENCHMARK <span class="small muted" id="bench-sub"></span><button id="bench-close" title="Close">✕</button></h2>
+    <div id="bench-progress"><div class="pbar"><i id="bench-bar"></i></div><span id="bench-now" class="small muted"></span></div>
+    <div id="bench-result" class="hidden">
+      <div id="bench-overall"></div>
+      <canvas id="bench-chart" width="860" height="230"></canvas>
+      <div id="bench-table"></div>
+      <p class="small muted" id="bench-files"></p>
+    </div>
+  </section>
+
+  <section class="card hud hidden" id="hud">
+    <div class="hud-top"><span class="chip" id="hud-chip"></span><b id="hud-title"></b>
+      <span class="hud-btns">
+        <button id="h-pause" class="ghost" title="Pause / play (Space)">⏸</button>
+        <button id="h-speed" class="ghost" title="Speed">1×</button>
+        <button id="h-replay" class="ghost" title="Replay from the start">↺</button>
+        <button id="h-brief" class="ghost" title="Briefing">ⓘ</button>
+        <button id="h-signals" class="ghost" title="Show CNN and spectrum panels">📈</button>
+        <button id="h-clean" class="ghost" title="Clean view (H)">◻</button>
+        <button id="h-list" class="ghost" title="All scenarios (S)">🎬</button>
+        <button id="h-phone" class="ghost" title="Join from a phone (P)">📱</button>
+        <button id="h-exit" class="ghost" title="Back to the live arena">✕</button>
+      </span>
+      <span class="muted" id="hud-time"></span></div>
+    <div class="hud-bar"><i id="hud-fill"></i><div id="hud-ticks"></div></div>
+    <div class="hud-cap"><span id="hud-step" class="muted"></span><span id="hud-text"></span></div>
+  </section>
+
+  <section class="card brief hidden" id="brief">
+    <div class="brief-head"><span class="chip" id="brief-chip"></span><span class="muted" id="brief-env"></span><button class="x" id="brief-close">✕</button></div>
+    <h2 id="brief-title"></h2>
+    <p id="brief-story"></p>
+    <div class="brief-cols">
+      <div><h3>What to watch</h3><ul id="brief-watch"></ul></div>
+      <div><h3>How the AI responds</h3><p id="brief-ai"></p><p class="exp" id="brief-exp"></p></div>
+    </div>
+    <p class="muted small">Both defences run on the same seed and the same attack. Switch between AI OFF (conventional fixed hopping) and AI ON (ABHEDYA) at any time with the switch at the top or the A key.</p>
+    <div class="row"><button id="brief-start" class="primary big">▶ Start scenario</button></div>
+  </section>
+
+  <section class="card gallery hidden" id="gallery">
+    <h2>SCENARIOS · one per attack type <button class="x" id="gallery-close">✕</button></h2>
+    <p class="muted">Each scenario runs in the real simulation: its own terrain, buildings and hills that block signals, unit routes and a scheduled jammer.
+      AI OFF (conventional fixed hopping) and AI ON (ABHEDYA) run together on the same seed and attack; switch between them full-screen.</p>
+    <div id="gallery-grid"></div>
+  </section>
+
+  <section class="card report hidden" id="report">
+    <h2><span id="rep-title"></span><button class="x" id="report-close">✕</button></h2>
+    <div class="rep-big">
+      <div class="off"><span>AI OFF · fixed hopping</span><b id="rep-off">—</b><small>packets delivered under attack</small></div>
+      <div class="on"><span>AI ON · ABHEDYA</span><b id="rep-on">—</b><small>packets delivered under attack</small></div>
+    </div>
+    <table id="rep-table"></table>
+    <h3>What the AI did</h3><ol id="rep-decisions"></ol>
+    <p class="exp" id="rep-exp"></p>
+    <div class="row"><button id="rep-download" class="primary wide" title="Saves a full report you can keep: chart, numbers, every AI decision, raw log">⬇ Download report</button></div>
+    <div class="row"><button id="rep-replay">↺ Replay</button><button id="rep-next" class="primary">Next scenario ▶</button><button id="rep-arena">Back to live arena</button></div>
+  </section>
+
+  <section class="card qrcard hidden" id="qrcard">
+    <h2>JOIN FROM YOUR PHONE <button class="x" id="qr-close">✕</button></h2>
+    <div class="qr-body">
+      <div id="qr-img"></div>
+      <div class="qr-text">
+        <p>1. Connect your phone to the <b>same Wi-Fi or hotspot</b> as this laptop.</p>
+        <p>2. Scan the code with the camera.</p>
+        <p>3. Launch jammers on the Map tab, flip the AI, run missions: this screen follows.</p>
+        <p class="qr-url" id="qr-url"></p>
+        <div id="qr-ips"></div>
+        <p class="muted small" id="qr-warn"></p>
+      </div>
+    </div>
   </section>
 
   <div id="toasts"></div>
 </div>
 
-<script type="module" src="app.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script type="module" src="app.js?v=30"></script>
 </body>
 </html>
