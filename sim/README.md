@@ -1,10 +1,15 @@
-# sim/ — radio world (Phase 1 · owner: Kodandarama)
+# sim/ — radio world (owner: Kodandarama)
 
-Will hold the real simulation that replaces `backend/fake_world.py`:
-GNU Radio flowgraph (QPSK, 2.4 GHz, path loss, Rician fading, jammer injection, 128-bin FFT),
-a NumPy fallback of the same blocks (`SIGNAL_BACKEND=gnuradio|numpy`), the 7 jammers, mesh routing,
-FHSS and energy-detector baselines, seeded replay.
+| File | What |
+|---|---|
+| `radio.py` | Band plan, link budget, path loss, Rician fading, coded BER → packet delivery, obstacle ray test |
+| `phy.py` | Emitter descriptions + NumPy receiver chain → 12×128 spectrogram windows (0.3 ms) |
+| `phy_gnuradio.py` | The same chain as a GNU Radio flowgraph (`SIGNAL_BACKEND=gnuradio`) |
+| `jammers.py` | Interference engine: barrage, random, sweep, reactive, deceptive, accidental, follower |
+| `hopping.py` | Fixed FHSS pattern, HMAC keyed hop sequence, key-derived rendezvous channel |
+| `network.py` | Nodes and motion, obstacles, per-slot SINR and packet draws, widest-path mesh routing |
+| `defenders.py` | Defender interface + baselines (none, fixed_hopping, energy) and the hop guard |
+| `world.py` | SimWorld (one world, 10 ms slots, control plane, KPIs, messages) and SimArena (server World, twins) |
+| `experiment.py` | Headless single runs for tests and the benchmark |
 
-Contract: expose `sim.world.SimArena(settings)` implementing `backend/world_api.World`
-(`hello_info()`, `step(dt)`, `handle(cmd)`). Start the server with `AEGIS_WORLD=sim`.
-Every message must validate against `shared/schema.json` (the tests check this).
+Defenders see only measurements (loss, per-channel energy, spectrogram on request), never the jammer list.

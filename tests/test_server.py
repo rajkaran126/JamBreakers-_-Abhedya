@@ -25,10 +25,12 @@ def assert_valid(msg: dict) -> None:
     assert not errors, f"{msg.get('type')} invalid: {errors[0].message} at {list(errors[0].path)}"
 
 
-@pytest.fixture()
-def client():
+@pytest.fixture(params=["sim", "fake"])
+def client(request, monkeypatch):
+    monkeypatch.setenv("AEGIS_WORLD", request.param)
     app = create_app(Settings())
     with TestClient(app) as c:
+        c.world_kind = request.param
         yield c
 
 
@@ -95,9 +97,17 @@ def test_every_message_matches_schema(client):
                 seen.add(m["type"])
                 if m["type"] == "state":
                     worlds.add(m["world"])
-        # let the placeholder benchmark finish
-        recv_until(ws, lambda m: (assert_valid(m) or True) and m["type"] == "benchmark" and m["status"] == "done", 200)
-    assert {"hello", "state", "spectrum", "event", "security", "score", "error"} <= seen
+        if client.world_kind == "fake":  # let the placeholder benchmark finish
+            recv_until(ws, lambda m: (assert_valid(m) or True) and m["type"] == "benchmark" and m["status"] == "done", 200)
+        else:  # let the real world run a while under attack so decisions appear
+            ws.send_json({"type": "cmd", "action": "launch_jammer", "jammer_type": "deceptive", "pos": [150, 80]})
+            for _ in range(200):
+                m = ws.receive_json()
+                assert_valid(m)
+                seen.add(m["type"])
+    expected = {"hello", "state", "spectrum", "event", "score", "error"}
+    expected |= {"security"} if client.world_kind == "fake" else {"decision"}
+    assert expected <= seen, expected - seen
     assert {"main", "ai_off", "ai_on"} <= worlds
 
 

@@ -4,355 +4,1265 @@
   "title": "AEGIS-LINK WebSocket message contract",
   "description": "Every message on /ws in either direction. Server->client messages use the envelope {v, type, t, src}. Client->server messages are commands {type:'cmd', action, ...}. Version 1.0. Change 'v' when a breaking change is made.",
   "oneOf": [
-    { "$ref": "#/$defs/hello" },
-    { "$ref": "#/$defs/state" },
-    { "$ref": "#/$defs/spectrum" },
-    { "$ref": "#/$defs/event" },
-    { "$ref": "#/$defs/decision" },
-    { "$ref": "#/$defs/security" },
-    { "$ref": "#/$defs/score" },
-    { "$ref": "#/$defs/benchmark" },
-    { "$ref": "#/$defs/report" },
-    { "$ref": "#/$defs/error" },
-    { "$ref": "#/$defs/cmd" }
+    {
+      "$ref": "#/$defs/hello"
+    },
+    {
+      "$ref": "#/$defs/state"
+    },
+    {
+      "$ref": "#/$defs/spectrum"
+    },
+    {
+      "$ref": "#/$defs/event"
+    },
+    {
+      "$ref": "#/$defs/decision"
+    },
+    {
+      "$ref": "#/$defs/security"
+    },
+    {
+      "$ref": "#/$defs/score"
+    },
+    {
+      "$ref": "#/$defs/benchmark"
+    },
+    {
+      "$ref": "#/$defs/report"
+    },
+    {
+      "$ref": "#/$defs/error"
+    },
+    {
+      "$ref": "#/$defs/cmd"
+    }
   ],
   "$defs": {
     "envelope": {
       "type": "object",
-      "required": ["v", "type", "t", "src"],
+      "required": [
+        "v",
+        "type",
+        "t",
+        "src"
+      ],
       "properties": {
-        "v": { "const": "1.0" },
-        "type": { "type": "string" },
-        "t": { "type": "number", "description": "Server wall-clock time, seconds since Unix epoch" },
-        "src": { "type": "string", "description": "Sender, e.g. 'server', 'sim', 'fake_world'" }
+        "v": {
+          "const": "1.0"
+        },
+        "type": {
+          "type": "string"
+        },
+        "t": {
+          "type": "number",
+          "description": "Server wall-clock time, seconds since Unix epoch"
+        },
+        "src": {
+          "type": "string",
+          "description": "Sender, e.g. 'server', 'sim', 'fake_world'"
+        }
       }
     },
-
     "world_id": {
-      "enum": ["main", "ai_off", "ai_on"],
+      "enum": [
+        "main",
+        "ai_off",
+        "ai_on"
+      ],
       "description": "'main' in single view. In side_by_side view the server sends one message per world: 'ai_off' and 'ai_on'."
     },
-    "channel": { "type": "integer", "minimum": 0, "maximum": 7 },
-    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3, "description": "[x, y, z] metres; x east, y north, z up" },
-    "vec2": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[x, y] metres" },
-    "jammer_type": { "enum": ["barrage", "random", "sweep", "reactive", "deceptive", "accidental", "follower", "smart"] },
-    "cnn_class": { "enum": ["clean", "barrage", "random", "sweep", "reactive", "deceptive", "accidental"] },
-    "level": { "enum": ["info", "warn", "alert", "good"] },
-    "action_taken": { "enum": ["hop", "fast_hop", "raise_power", "relay", "lower_rate", "hold", "ignore", "none"] },
-
+    "channel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7
+    },
+    "vec3": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "[x, y, z] metres; x east, y north, z up"
+    },
+    "vec2": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[x, y] metres"
+    },
+    "jammer_type": {
+      "enum": [
+        "barrage",
+        "random",
+        "sweep",
+        "reactive",
+        "deceptive",
+        "accidental",
+        "follower",
+        "smart"
+      ]
+    },
+    "cnn_class": {
+      "enum": [
+        "clean",
+        "barrage",
+        "random",
+        "sweep",
+        "reactive",
+        "deceptive",
+        "accidental"
+      ]
+    },
+    "level": {
+      "enum": [
+        "info",
+        "warn",
+        "alert",
+        "good"
+      ]
+    },
+    "action_taken": {
+      "enum": [
+        "hop",
+        "fast_hop",
+        "raise_power",
+        "relay",
+        "lower_rate",
+        "hold",
+        "ignore",
+        "none"
+      ]
+    },
     "node": {
       "type": "object",
-      "required": ["id", "kind", "pos", "channel"],
+      "required": [
+        "id",
+        "kind",
+        "pos",
+        "channel"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "kind": { "enum": ["command_post", "drone", "vehicle", "relay"] },
-        "pos": { "$ref": "#/$defs/vec3" },
-        "heading_deg": { "type": "number" },
-        "channel": { "$ref": "#/$defs/channel" },
-        "tx_power_dbm": { "type": "number" },
-        "modulation": { "enum": ["QPSK", "BPSK"] },
-        "status": { "enum": ["ok", "degraded", "down", "rejoining"] }
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "command_post",
+            "drone",
+            "vehicle",
+            "relay"
+          ]
+        },
+        "pos": {
+          "$ref": "#/$defs/vec3"
+        },
+        "heading_deg": {
+          "type": "number"
+        },
+        "channel": {
+          "$ref": "#/$defs/channel"
+        },
+        "tx_power_dbm": {
+          "type": "number"
+        },
+        "modulation": {
+          "enum": [
+            "QPSK",
+            "BPSK"
+          ]
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "degraded",
+            "down",
+            "rejoining"
+          ]
+        },
+        "parent": {
+          "type": "string",
+          "description": "Next hop towards the command post"
+        }
       }
     },
     "link": {
       "type": "object",
-      "required": ["a", "b", "sinr_db", "status"],
+      "required": [
+        "a",
+        "b",
+        "sinr_db",
+        "status"
+      ],
       "properties": {
-        "a": { "type": "string" },
-        "b": { "type": "string" },
-        "sinr_db": { "type": "number" },
-        "status": { "enum": ["ok", "degraded", "down"] },
-        "channel": { "$ref": "#/$defs/channel" },
-        "delivery_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "routed": { "type": "boolean", "description": "true if this link is on the active route to the command post" }
+        "a": {
+          "type": "string"
+        },
+        "b": {
+          "type": "string"
+        },
+        "sinr_db": {
+          "type": "number"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "degraded",
+            "down"
+          ]
+        },
+        "channel": {
+          "$ref": "#/$defs/channel"
+        },
+        "delivery_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "routed": {
+          "type": "boolean",
+          "description": "true if this link is on the active route to the command post"
+        }
       }
     },
     "jammer": {
       "type": "object",
-      "required": ["id", "type", "pos", "active"],
+      "required": [
+        "id",
+        "type",
+        "pos",
+        "active"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "$ref": "#/$defs/jammer_type" },
-        "pos": { "$ref": "#/$defs/vec3" },
-        "power_dbm": { "type": "number" },
-        "channels": { "type": "array", "items": { "$ref": "#/$defs/channel" }, "description": "Channels currently being hit" },
-        "active": { "type": "boolean" },
-        "owner": { "type": "string", "description": "Player name who launched it" }
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/jammer_type"
+        },
+        "pos": {
+          "$ref": "#/$defs/vec3"
+        },
+        "power_dbm": {
+          "type": "number"
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/channel"
+          },
+          "description": "Channels currently being hit"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Player name who launched it"
+        }
       }
     },
     "estimate": {
       "type": "object",
-      "required": ["pos", "radius_m"],
+      "required": [
+        "pos",
+        "radius_m"
+      ],
       "properties": {
-        "jammer_id": { "type": "string", "description": "Ground-truth id (for scoring only; the AI does not know it)" },
-        "pos": { "$ref": "#/$defs/vec2" },
-        "radius_m": { "type": "number", "minimum": 0, "description": "95 % uncertainty radius" }
+        "jammer_id": {
+          "type": "string",
+          "description": "Ground-truth id (for scoring only; the AI does not know it)"
+        },
+        "pos": {
+          "$ref": "#/$defs/vec2"
+        },
+        "radius_m": {
+          "type": "number",
+          "minimum": 0,
+          "description": "95 % uncertainty radius"
+        }
       }
     },
     "obstacle": {
       "type": "object",
-      "required": ["id", "kind", "pos", "size"],
+      "required": [
+        "id",
+        "kind",
+        "pos",
+        "size"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "kind": { "enum": ["building", "hill"] },
-        "pos": { "$ref": "#/$defs/vec2" },
-        "size": { "$ref": "#/$defs/vec3", "description": "[width, depth, height] metres" },
-        "loss_db": { "type": "number" }
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "building",
+            "hill"
+          ]
+        },
+        "pos": {
+          "$ref": "#/$defs/vec2"
+        },
+        "size": {
+          "$ref": "#/$defs/vec3",
+          "description": "[width, depth, height] metres"
+        },
+        "loss_db": {
+          "type": "number"
+        }
       }
     },
     "kpis": {
       "type": "object",
-      "required": ["delivery_pct", "hop_latency_ms", "outage_ms", "hops", "frames_verified", "frames_rejected"],
+      "required": [
+        "delivery_pct",
+        "hop_latency_ms",
+        "outage_ms",
+        "hops",
+        "frames_verified",
+        "frames_rejected"
+      ],
       "properties": {
-        "delivery_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "hop_latency_ms": { "type": ["number", "null"], "description": "Median detect-to-hop latency (first jammed slot -> both ends on new channel). null until the first hop." },
-        "hop_latency_p95_ms": { "type": ["number", "null"] },
-        "outage_ms": { "type": "number", "minimum": 0, "description": "Total time the route to the command post was down" },
-        "healthy_links": { "type": "integer", "minimum": 0 },
-        "total_links": { "type": "integer", "minimum": 0 },
-        "hops": { "type": "integer", "minimum": 0 },
-        "decision_time_ms": { "type": ["number", "null"], "description": "CNN + policy compute time for the last decision" },
-        "frames_verified": { "type": "integer", "minimum": 0 },
-        "frames_rejected": { "type": "integer", "minimum": 0 },
-        "frames_forged": { "type": "integer", "minimum": 0 }
-      }
-    },
-
-    "hello": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
-      "type": "object",
-      "required": ["type", "session_id", "schema_version", "channels_mhz", "bounds", "ai_enabled", "view"],
-      "properties": {
-        "type": { "const": "hello" },
-        "session_id": { "type": "string" },
-        "server_version": { "type": "string" },
-        "schema_version": { "const": "1.0" },
-        "world_source": { "enum": ["fake", "sim"], "description": "'fake' means placeholder data for UI work" },
-        "signal_backend": { "enum": ["gnuradio", "numpy", "none"] },
-        "tick_hz": { "type": "number" },
-        "slot_ms": { "type": "number" },
-        "channels_mhz": { "type": "array", "items": { "type": "number" }, "minItems": 8, "maxItems": 8 },
-        "fft_bins": { "type": "integer" },
-        "bounds": {
-          "type": "object",
-          "required": ["x", "y"],
-          "properties": { "x": { "$ref": "#/$defs/vec2" }, "y": { "$ref": "#/$defs/vec2" } }
+        "delivery_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
         },
-        "jammer_types": { "type": "array", "items": { "$ref": "#/$defs/jammer_type" } },
-        "classes": { "type": "array", "items": { "$ref": "#/$defs/cnn_class" } },
-        "ai_enabled": { "type": "boolean" },
-        "view": { "enum": ["single", "side_by_side"] },
-        "key_fingerprint": { "type": "string", "description": "Public fingerprint of the mission key, never the key" }
-      }
-    },
-
-    "state": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
-      "type": "object",
-      "required": ["type", "world", "tick", "sim_time_s", "ai_enabled", "view", "nodes", "links", "jammers", "kpis"],
-      "properties": {
-        "type": { "const": "state" },
-        "world": { "$ref": "#/$defs/world_id" },
-        "tick": { "type": "integer", "minimum": 0 },
-        "sim_time_s": { "type": "number", "minimum": 0 },
-        "ai_enabled": { "type": "boolean" },
-        "view": { "enum": ["single", "side_by_side"] },
-        "mode": { "enum": ["arena", "scenario"] },
-        "scenario": { "type": ["string", "null"] },
-        "paused": { "type": "boolean" },
-        "speed": { "enum": [1, 2, 4] },
-        "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
-        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
-        "jammers": { "type": "array", "items": { "$ref": "#/$defs/jammer" } },
-        "estimates": { "type": "array", "items": { "$ref": "#/$defs/estimate" } },
-        "obstacles": { "type": "array", "items": { "$ref": "#/$defs/obstacle" } },
-        "kpis": { "$ref": "#/$defs/kpis" }
-      }
-    },
-
-    "spectrum": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
-      "type": "object",
-      "required": ["type", "world", "node_id", "bins"],
-      "properties": {
-        "type": { "const": "spectrum" },
-        "world": { "$ref": "#/$defs/world_id" },
-        "node_id": { "type": "string", "description": "Receiver whose FFT this is" },
-        "f_start_mhz": { "type": "number" },
-        "f_stop_mhz": { "type": "number" },
-        "bins": { "type": "array", "items": { "type": "number" }, "minItems": 128, "maxItems": 128, "description": "Power per bin, dBm" },
-        "anomaly": { "type": "boolean" },
-        "probs": {
-          "type": "object",
-          "description": "CNN class probabilities, sum ~1",
-          "propertyNames": { "$ref": "#/$defs/cnn_class" },
-          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        "hop_latency_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Median detect-to-hop latency (first jammed slot -> both ends on new channel). null until the first hop."
         },
-        "verdict": { "$ref": "#/$defs/cnn_class" },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-        "gradcam": {
-          "type": "array",
-          "description": "Optional 12 time rows x 32 frequency columns, values 0..1",
-          "minItems": 12, "maxItems": 12,
-          "items": { "type": "array", "items": { "type": "number", "minimum": 0, "maximum": 1 }, "minItems": 32, "maxItems": 32 }
+        "hop_latency_p95_ms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "outage_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total time the route to the command post was down"
+        },
+        "healthy_links": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_links": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hops": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "decision_time_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "CNN + policy compute time for the last decision"
+        },
+        "frames_verified": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "frames_rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "frames_forged": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "delivery_total_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Since the start of the run (delivery_pct is the last 1 s)"
         }
       }
     },
-
+    "hello": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "type",
+        "session_id",
+        "schema_version",
+        "channels_mhz",
+        "bounds",
+        "ai_enabled",
+        "view"
+      ],
+      "properties": {
+        "type": {
+          "const": "hello"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "server_version": {
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0"
+        },
+        "world_source": {
+          "enum": [
+            "fake",
+            "sim"
+          ],
+          "description": "'fake' means placeholder data for UI work"
+        },
+        "signal_backend": {
+          "enum": [
+            "gnuradio",
+            "numpy",
+            "none"
+          ]
+        },
+        "tick_hz": {
+          "type": "number"
+        },
+        "slot_ms": {
+          "type": "number"
+        },
+        "channels_mhz": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "fft_bins": {
+          "type": "integer"
+        },
+        "bounds": {
+          "type": "object",
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "$ref": "#/$defs/vec2"
+            },
+            "y": {
+              "$ref": "#/$defs/vec2"
+            }
+          }
+        },
+        "jammer_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jammer_type"
+          }
+        },
+        "classes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cnn_class"
+          }
+        },
+        "ai_enabled": {
+          "type": "boolean"
+        },
+        "view": {
+          "enum": [
+            "single",
+            "side_by_side"
+          ]
+        },
+        "key_fingerprint": {
+          "type": "string",
+          "description": "Public fingerprint of the mission key, never the key"
+        },
+        "ai_off_defender": {
+          "type": "string"
+        },
+        "ai_on_defender": {
+          "type": "string"
+        },
+        "obstacles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/obstacle"
+          }
+        }
+      }
+    },
+    "state": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "type",
+        "world",
+        "tick",
+        "sim_time_s",
+        "ai_enabled",
+        "view",
+        "nodes",
+        "links",
+        "jammers",
+        "kpis"
+      ],
+      "properties": {
+        "type": {
+          "const": "state"
+        },
+        "world": {
+          "$ref": "#/$defs/world_id"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sim_time_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ai_enabled": {
+          "type": "boolean"
+        },
+        "view": {
+          "enum": [
+            "single",
+            "side_by_side"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "arena",
+            "scenario"
+          ]
+        },
+        "scenario": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "paused": {
+          "type": "boolean"
+        },
+        "speed": {
+          "enum": [
+            1,
+            2,
+            4
+          ]
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "jammers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jammer"
+          }
+        },
+        "estimates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/estimate"
+          }
+        },
+        "obstacles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/obstacle"
+          }
+        },
+        "kpis": {
+          "$ref": "#/$defs/kpis"
+        },
+        "defender": {
+          "enum": [
+            "none",
+            "fixed_hopping",
+            "energy",
+            "aegis",
+            "rl"
+          ],
+          "description": "Who is defending this world"
+        },
+        "hop_mode": {
+          "enum": [
+            "dwell",
+            "fixed",
+            "keyed"
+          ],
+          "description": "dwell = stay on one channel; fixed = public FHSS pattern; keyed = HMAC sequence per slot"
+        },
+        "blacklist": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/channel"
+          }
+        }
+      }
+    },
+    "spectrum": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "type",
+        "world",
+        "node_id",
+        "bins"
+      ],
+      "properties": {
+        "type": {
+          "const": "spectrum"
+        },
+        "world": {
+          "$ref": "#/$defs/world_id"
+        },
+        "node_id": {
+          "type": "string",
+          "description": "Receiver whose FFT this is"
+        },
+        "f_start_mhz": {
+          "type": "number"
+        },
+        "f_stop_mhz": {
+          "type": "number"
+        },
+        "bins": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 128,
+          "maxItems": 128,
+          "description": "Power per bin, dBm"
+        },
+        "anomaly": {
+          "type": "boolean"
+        },
+        "probs": {
+          "type": "object",
+          "description": "CNN class probabilities, sum ~1",
+          "propertyNames": {
+            "$ref": "#/$defs/cnn_class"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "verdict": {
+          "$ref": "#/$defs/cnn_class"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradcam": {
+          "type": "array",
+          "description": "Optional 12 time rows x 32 frequency columns, values 0..1",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 32,
+            "maxItems": 32
+          }
+        }
+      }
+    },
     "event": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "level", "text"],
+      "required": [
+        "type",
+        "level",
+        "text"
+      ],
       "properties": {
-        "type": { "const": "event" },
-        "world": { "$ref": "#/$defs/world_id" },
-        "level": { "$ref": "#/$defs/level" },
-        "text": { "type": "string", "description": "Plain English, shown to the operator" },
-        "req_id": { "type": "string", "description": "Echo of the command id that caused this, if any" }
+        "type": {
+          "const": "event"
+        },
+        "world": {
+          "$ref": "#/$defs/world_id"
+        },
+        "level": {
+          "$ref": "#/$defs/level"
+        },
+        "text": {
+          "type": "string",
+          "description": "Plain English, shown to the operator"
+        },
+        "req_id": {
+          "type": "string",
+          "description": "Echo of the command id that caused this, if any"
+        }
       }
     },
-
     "decision": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "world", "sim_time_s", "class", "confidence", "action"],
+      "required": [
+        "type",
+        "world",
+        "sim_time_s",
+        "class",
+        "confidence",
+        "action"
+      ],
       "properties": {
-        "type": { "const": "decision" },
-        "world": { "$ref": "#/$defs/world_id" },
-        "sim_time_s": { "type": "number" },
-        "class": { "$ref": "#/$defs/cnn_class" },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-        "action": { "$ref": "#/$defs/action_taken" },
-        "from_channel": { "$ref": "#/$defs/channel" },
-        "to_channel": { "$ref": "#/$defs/channel" },
-        "latency_ms": { "type": ["number", "null"], "description": "Measured detect-to-hop latency for this decision" },
-        "node_ids": { "type": "array", "items": { "type": "string" } },
-        "reason": { "type": "string" }
+        "type": {
+          "const": "decision"
+        },
+        "world": {
+          "$ref": "#/$defs/world_id"
+        },
+        "sim_time_s": {
+          "type": "number"
+        },
+        "class": {
+          "enum": [
+            "clean",
+            "barrage",
+            "random",
+            "sweep",
+            "reactive",
+            "deceptive",
+            "accidental",
+            "unknown"
+          ],
+          "description": "CNN class, or 'unknown' for defenders that do not classify (energy detector)"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "action": {
+          "$ref": "#/$defs/action_taken"
+        },
+        "from_channel": {
+          "$ref": "#/$defs/channel"
+        },
+        "to_channel": {
+          "$ref": "#/$defs/channel"
+        },
+        "latency_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Measured detect-to-hop latency for this decision"
+        },
+        "node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string"
+        },
+        "defender": {
+          "enum": [
+            "none",
+            "fixed_hopping",
+            "energy",
+            "aegis",
+            "rl"
+          ]
+        }
       }
     },
-
     "security": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "test", "accepted", "reason"],
+      "required": [
+        "type",
+        "test",
+        "accepted",
+        "reason"
+      ],
       "properties": {
-        "type": { "const": "security" },
-        "test": { "enum": ["tamper", "spoof", "replay", "eavesdrop"] },
-        "accepted": { "type": "boolean" },
-        "reason": { "type": "string" },
-        "header_hex": { "type": "string" },
-        "ciphertext_hex": { "type": "string" },
-        "plaintext_hint": { "type": "string", "description": "For eavesdrop: what the attacker could read (nothing useful)" },
-        "req_id": { "type": "string" }
+        "type": {
+          "const": "security"
+        },
+        "test": {
+          "enum": [
+            "tamper",
+            "spoof",
+            "replay",
+            "eavesdrop"
+          ]
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "header_hex": {
+          "type": "string"
+        },
+        "ciphertext_hex": {
+          "type": "string"
+        },
+        "plaintext_hint": {
+          "type": "string",
+          "description": "For eavesdrop: what the attacker could read (nothing useful)"
+        },
+        "req_id": {
+          "type": "string"
+        }
       }
     },
-
     "score": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "leaderboard"],
+      "required": [
+        "type",
+        "leaderboard"
+      ],
       "properties": {
-        "type": { "const": "score" },
+        "type": {
+          "const": "score"
+        },
         "leaderboard": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["player", "attacks"],
+            "required": [
+              "player",
+              "attacks"
+            ],
             "properties": {
-              "player": { "type": "string" },
-              "attacks": { "type": "integer", "minimum": 0 },
-              "damage": { "type": "number", "description": "Packets lost caused, %·s" }
+              "player": {
+                "type": "string"
+              },
+              "attacks": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "damage": {
+                "type": "number",
+                "description": "Packets lost caused, %\u00b7s"
+              }
             }
           }
         }
       }
     },
-
     "benchmark_row": {
       "type": "object",
-      "required": ["jammer", "defender", "delivery_pct"],
+      "required": [
+        "jammer",
+        "defender",
+        "delivery_pct"
+      ],
       "properties": {
-        "jammer": { "type": "string" },
-        "defender": { "enum": ["none", "fixed_hopping", "energy", "aegis", "rl"] },
-        "delivery_pct": { "type": "number" },
-        "hop_latency_median_ms": { "type": ["number", "null"] },
-        "hop_latency_p95_ms": { "type": ["number", "null"] },
-        "outage_ms": { "type": "number" },
-        "accuracy_pct": { "type": ["number", "null"] }
+        "jammer": {
+          "type": "string"
+        },
+        "defender": {
+          "enum": [
+            "none",
+            "fixed_hopping",
+            "energy",
+            "aegis",
+            "rl"
+          ]
+        },
+        "delivery_pct": {
+          "type": "number"
+        },
+        "hop_latency_median_ms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "hop_latency_p95_ms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "outage_ms": {
+          "type": "number"
+        },
+        "accuracy_pct": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
       }
     },
     "benchmark": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "status", "progress"],
+      "required": [
+        "type",
+        "status",
+        "progress"
+      ],
       "properties": {
-        "type": { "const": "benchmark" },
-        "status": { "enum": ["running", "done", "failed"] },
-        "progress": { "type": "number", "minimum": 0, "maximum": 1 },
-        "seed": { "type": "integer" },
-        "rows": { "type": "array", "items": { "$ref": "#/$defs/benchmark_row" } },
-        "files": { "type": "array", "items": { "type": "string" }, "description": "Saved JSON/CSV paths" },
-        "placeholder": { "type": "boolean", "description": "true when produced by the fake world" }
+        "type": {
+          "const": "benchmark"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "done",
+            "failed"
+          ]
+        },
+        "progress": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/benchmark_row"
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Saved JSON/CSV paths"
+        },
+        "placeholder": {
+          "type": "boolean",
+          "description": "true when produced by the fake world"
+        }
       }
     },
-
     "report": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "scenario"],
+      "required": [
+        "type",
+        "scenario"
+      ],
       "properties": {
-        "type": { "const": "report" },
-        "scenario": { "type": "string" },
-        "duration_s": { "type": "number" },
-        "ai_on": { "$ref": "#/$defs/kpis" },
-        "ai_off": { "$ref": "#/$defs/kpis" },
-        "status": { "enum": ["partial", "done"] }
+        "type": {
+          "const": "report"
+        },
+        "scenario": {
+          "type": "string"
+        },
+        "duration_s": {
+          "type": "number"
+        },
+        "ai_on": {
+          "$ref": "#/$defs/kpis"
+        },
+        "ai_off": {
+          "$ref": "#/$defs/kpis"
+        },
+        "status": {
+          "enum": [
+            "partial",
+            "done"
+          ]
+        }
       }
     },
-
     "error": {
-      "allOf": [{ "$ref": "#/$defs/envelope" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/envelope"
+        }
+      ],
       "type": "object",
-      "required": ["type", "code", "message"],
+      "required": [
+        "type",
+        "code",
+        "message"
+      ],
       "properties": {
-        "type": { "const": "error" },
-        "code": { "enum": ["bad_json", "invalid_command", "not_implemented", "busy", "internal"] },
-        "message": { "type": "string" },
-        "req_id": { "type": "string" }
+        "type": {
+          "const": "error"
+        },
+        "code": {
+          "enum": [
+            "bad_json",
+            "invalid_command",
+            "not_implemented",
+            "busy",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "req_id": {
+          "type": "string"
+        }
       }
     },
-
     "cmd": {
       "type": "object",
       "description": "Client -> server. 'id' is optional and echoed back as req_id.",
-      "required": ["type", "action"],
+      "required": [
+        "type",
+        "action"
+      ],
       "properties": {
-        "type": { "const": "cmd" },
-        "id": { "type": "string", "maxLength": 64 },
-        "player": { "type": "string", "maxLength": 24 },
+        "type": {
+          "const": "cmd"
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "player": {
+          "type": "string",
+          "maxLength": 24
+        },
         "action": {
-          "enum": ["launch_jammer", "clear_jammers", "toggle_ai", "set_view", "run_benchmark", "security_test",
-                   "load_scenario", "exit_scenario", "play", "pause", "set_speed", "restart"]
+          "enum": [
+            "launch_jammer",
+            "clear_jammers",
+            "toggle_ai",
+            "set_view",
+            "run_benchmark",
+            "security_test",
+            "load_scenario",
+            "exit_scenario",
+            "play",
+            "pause",
+            "set_speed",
+            "restart"
+          ]
         }
       },
       "allOf": [
-        { "if": { "properties": { "action": { "const": "launch_jammer" } } },
-          "then": { "required": ["jammer_type", "pos"],
-                    "properties": { "jammer_type": { "$ref": "#/$defs/jammer_type" },
-                                    "pos": { "$ref": "#/$defs/vec2" },
-                                    "power_dbm": { "type": "number", "minimum": 0, "maximum": 50 } } } },
-        { "if": { "properties": { "action": { "const": "toggle_ai" } } },
-          "then": { "properties": { "enabled": { "type": "boolean" } } } },
-        { "if": { "properties": { "action": { "const": "set_view" } } },
-          "then": { "required": ["view"], "properties": { "view": { "enum": ["single", "side_by_side"] } } } },
-        { "if": { "properties": { "action": { "const": "run_benchmark" } } },
-          "then": { "properties": { "seed": { "type": "integer" }, "duration_s": { "type": "number", "exclusiveMinimum": 0, "maximum": 120 } } } },
-        { "if": { "properties": { "action": { "const": "security_test" } } },
-          "then": { "required": ["test"], "properties": { "test": { "enum": ["tamper", "spoof", "replay", "eavesdrop"] } } } },
-        { "if": { "properties": { "action": { "const": "load_scenario" } } },
-          "then": { "required": ["name"], "properties": { "name": { "enum": ["border_convoy", "disaster_zone", "drone_delivery"] } } } },
-        { "if": { "properties": { "action": { "const": "set_speed" } } },
-          "then": { "required": ["speed"], "properties": { "speed": { "enum": [1, 2, 4] } } } }
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "launch_jammer"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "jammer_type",
+              "pos"
+            ],
+            "properties": {
+              "jammer_type": {
+                "$ref": "#/$defs/jammer_type"
+              },
+              "pos": {
+                "$ref": "#/$defs/vec2"
+              },
+              "power_dbm": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 50
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "toggle_ai"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "set_view"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "view"
+            ],
+            "properties": {
+              "view": {
+                "enum": [
+                  "single",
+                  "side_by_side"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "run_benchmark"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "seed": {
+                "type": "integer"
+              },
+              "duration_s": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 120
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "security_test"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "test"
+            ],
+            "properties": {
+              "test": {
+                "enum": [
+                  "tamper",
+                  "spoof",
+                  "replay",
+                  "eavesdrop"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "load_scenario"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "enum": [
+                  "border_convoy",
+                  "disaster_zone",
+                  "drone_delivery"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "set_speed"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "speed"
+            ],
+            "properties": {
+              "speed": {
+                "enum": [
+                  1,
+                  2,
+                  4
+                ]
+              }
+            }
+          }
+        }
       ]
     }
   }
