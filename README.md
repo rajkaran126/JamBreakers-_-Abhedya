@@ -143,7 +143,7 @@ through the firewall for **private** networks.
 | `AEGIS_TICK_HZ` | `20` | Broadcast rate |
 | `AEGIS_SLOT_MS` | `10` | Radio slot length inside the simulation |
 | `AEGIS_AUTH` | `1` | `0` switches sign-in off (anyone on the Wi-Fi can then control the demo) |
-| `AEGIS_JOIN_CODE` | `1` | `0` lets phones sign in without the QR's join code |
+| `AEGIS_JOIN_CODE` | `0` | `1` also asks phones for the join code shown under the laptop's QR |
 | `AEGIS_USERS_FILE` | `data/users.json` | Where accounts are stored |
 
 The variables keep their `AEGIS_` prefix from the project's working name, so existing setups keep working.

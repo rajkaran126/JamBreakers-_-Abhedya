@@ -135,11 +135,11 @@ class AuthStore:
             pass
 
     def ensure_first_run(self) -> dict[str, tuple[str, str]]:
-        """No accounts yet: create one commander and one observer with random passwords. Returns {user: (role, pw)}."""
+        """No accounts yet: create the single shared account (full control) with a random password. Returns {user: (role, pw)}."""
         self.load()                                   # another server start may have created them a moment ago
         if self.users:
             return {}
-        made = {"commander": ("commander", make_password()), "judge": ("observer", make_password())}
+        made = {"abhedya": ("commander", make_password())}
         for name, (role, pw) in made.items():
             self.add_user(name, pw, role, save=False)
         self.save()

@@ -28,10 +28,10 @@ def test_passwords_are_salted_and_never_stored(store, tmp_path):
     assert a["hash"] != b["hash"] and check_password("same", a) and not check_password("other", a)
 
 
-def test_first_run_creates_a_commander_and_an_observer(tmp_path):
+def test_first_run_creates_one_shared_account(tmp_path):
     s = AuthStore(tmp_path / "u.json")
     made = s.ensure_first_run()
-    assert {r for r, _ in made.values()} == {"commander", "observer"}
+    assert list(made) == ["abhedya"] and made["abhedya"][0] == "commander"
     assert all(len(pw) >= 12 for _, pw in made.values())
     assert s.ensure_first_run() == {}            # only once
 
@@ -111,7 +111,8 @@ def test_remote_devices_must_sign_in(secured):
     assert c.get("/api/report").status_code == 401
     assert c.get("/api/me").status_code == 401
     assert c.get("/api/lan").status_code == 401
-    assert c.post("/api/login", json={"username": "cmdr", "password": "correct-horse"}).json()["code"] == "join_code"
+    # join code is off by default: any device on the Wi-Fi signs in with the user ID and password alone
+    assert c.post("/api/login", json={"username": "cmdr", "password": "correct-horse"}).status_code == 200
     assert c.get("/app/").status_code in (200, 404) and c.get("/login").status_code == 200   # the shell itself is public
     tok = _login(c, app, "cmdr", "correct-horse")
     h = {"Authorization": f"Bearer {tok}"}
@@ -170,8 +171,8 @@ def test_a_second_server_start_does_not_create_different_accounts(tmp_path):
     a, b = AuthStore(tmp_path / "users.json"), AuthStore(tmp_path / "users.json")   # both loaded before either saved
     made = a.ensure_first_run()
     assert made and b.ensure_first_run() == {}            # b re-reads the file instead of overwriting a's accounts
-    pw = made["commander"][1]
-    assert AuthStore(tmp_path / "users.json").login("commander", pw, "10.0.0.1", need_join_code=False)
+    pw = made["abhedya"][1]
+    assert AuthStore(tmp_path / "users.json").login("abhedya", pw, "10.0.0.1", need_join_code=False)
     assert not list(tmp_path.glob("*.tmp"))
 
 
