@@ -218,3 +218,8 @@ html, body { font-size: 16px; }
   cursor: pointer; border-radius: 8px; padding: 0; }
 .pw-eye:hover, .pw-eye:focus-visible { opacity: 1; }
 .pw-eye[aria-pressed="true"] { opacity: 1; }
+
+/* sign-out button in the top bar, always one tap away */
+.pill.signout { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--edge); background: var(--card);
+  color: var(--text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.pill.signout:active { transform: scale(.97); }

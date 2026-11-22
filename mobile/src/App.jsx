@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useStore, mode } from './store.js';
+import { useStore, mode, logOut } from './store.js';
 import Live from './tabs/Live.jsx';
 import MapTab from './tabs/MapTab.jsx';
 import Missions from './tabs/Missions.jsx';
@@ -28,6 +28,15 @@ export default function App() {
         {scn && <span className="pill scn" onClick={() => setTab('missions')}>🎬 Mission</span>}
         {S.me?.role === 'observer' && <span className="pill viewonly" title="This account can watch but not control">👁 View only</span>}
         <span className={`pill conn ${S.conn}`}><i />{connLabel}</span>
+        {S.me && !S.me.local && (
+          <button type="button" className="pill signout" onClick={() => { if (window.confirm('Sign out of ABHEDYA on this phone?')) logOut(); }}
+                  title={`Signed in as ${S.me.user}`} aria-label="Sign out">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign out
+          </button>
+        )}
       </header>
       {S.conn !== 'online' && (
         <div className="offline-bar">
