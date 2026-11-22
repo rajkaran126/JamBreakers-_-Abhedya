@@ -223,3 +223,8 @@ html, body { font-size: 16px; }
 .pill.signout { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--edge); background: var(--card);
   color: var(--text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .pill.signout:active { transform: scale(.97); }
+
+/* "no jammer yet" explanation under the gauge */
+.calm-note { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--card2); border: 1px dashed var(--edge); }
+.calm-note p { margin: 0 0 8px; font-size: 13px; line-height: 1.4; }
+.calm-note p:last-child { margin-bottom: 0; }
