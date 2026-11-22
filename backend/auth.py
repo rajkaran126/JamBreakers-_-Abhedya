@@ -89,12 +89,27 @@ class AuthStore:
         self.fails: dict[tuple[str, str], list[float]] = {}
         self._codes: list[tuple[str, float]] = []      # (code, issued) newest first; the previous one stays valid
         self._dummy = hash_password("not-a-real-password", rounds=PBKDF2_ROUNDS)
+        self._mtime: Optional[float] = None
         self.load()
 
     # ---- accounts ----
     def load(self) -> None:
         if self.path.exists():
+            self._mtime = self.path.stat().st_mtime
             self.users = json.loads(self.path.read_text(encoding="utf-8")).get("users", {})
+
+    def refresh(self) -> None:
+        """Pick up accounts added or passwords changed (python -m backend.users) while the server runs:
+        without this a running server keeps checking the old passwords until it is restarted."""
+        try:
+            mtime = self.path.stat().st_mtime
+        except OSError:
+            return
+        if mtime != self._mtime:
+            try:
+                self.load()
+            except (OSError, ValueError):
+                pass                                  # half-written file: keep the accounts we have
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -112,6 +127,10 @@ class AuthStore:
                 time.sleep(0.05)
         try:
             os.chmod(self.path, 0o600)
+        except OSError:
+            pass
+        try:
+            self._mtime = self.path.stat().st_mtime
         except OSError:
             pass
 
@@ -179,6 +198,7 @@ class AuthStore:
                 raise AuthError(429, "locked", f"Too many wrong passwords. Try again in {int(LOCK_S - (now - recent[-1])) + 1} s.")
         if need_join_code and not self.join_code_ok(join_code, now):
             raise AuthError(403, "join_code", "Scan the QR code on the laptop again (the join code is missing or has expired).")
+        self.refresh()
         rec = self.users.get(key)
         ok = check_password(password or "", rec if rec else self._dummy) and rec is not None   # same work either way
         if not ok:

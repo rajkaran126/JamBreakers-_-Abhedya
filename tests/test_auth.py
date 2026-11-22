@@ -173,3 +173,23 @@ def test_a_second_server_start_does_not_create_different_accounts(tmp_path):
     pw = made["commander"][1]
     assert AuthStore(tmp_path / "users.json").login("commander", pw, "10.0.0.1", need_join_code=False)
     assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_password_changed_while_server_runs(tmp_path):
+    """A running server must accept a password changed on disk (python -m backend.users), without a restart."""
+    import json
+    import os
+    from backend.auth import AuthStore, AuthError, hash_password
+    f = tmp_path / "users.json"
+    f.write_text(json.dumps({"users": {"judge": {"name": "judge", "role": "observer", **hash_password("old-pass-1")}}}))
+    store = AuthStore(f)
+    store.login("judge", "old-pass-1", "10.0.0.5", need_join_code=False)
+    f.write_text(json.dumps({"users": {"judge": {"name": "judge", "role": "observer", **hash_password("judge123")}}}))
+    st = f.stat()
+    os.utime(f, (st.st_atime, st.st_mtime + 5))
+    assert store.login("judge", "judge123", "10.0.0.6", need_join_code=False)["role"] == "observer"
+    try:
+        store.login("judge", "old-pass-1", "10.0.0.7", need_join_code=False)
+        raise AssertionError("old password still accepted")
+    except AuthError as e:
+        assert e.code == "bad_login"
