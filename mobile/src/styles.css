@@ -209,3 +209,12 @@ html, body { font-size: 16px; }
 .login-card .ok-line { color: var(--ok); margin: 8px 0 0; font-size: 14px; }
 .pill.viewonly { background: var(--card2); color: var(--mute); }
 .card.account { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+/* password field with a show / hide eye */
+.pw-wrap { position: relative; }
+.pw-wrap input { width: 100%; padding-right: 48px; box-sizing: border-box; }
+.pw-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px;
+  display: grid; place-items: center; border: 0; background: transparent; color: inherit; opacity: .65;
+  cursor: pointer; border-radius: 8px; padding: 0; }
+.pw-eye:hover, .pw-eye:focus-visible { opacity: 1; }
+.pw-eye[aria-pressed="true"] { opacity: 1; }

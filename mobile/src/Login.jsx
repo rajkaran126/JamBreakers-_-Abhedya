@@ -5,6 +5,7 @@ import { apiBase, signedIn } from './store.js';
 export default function Login() {
   const [user, setUser] = useState('');
   const [pw, setPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [code, setCode] = useState(JOIN_CODE);
   const [showCode, setShowCode] = useState(!JOIN_CODE);
   const [err, setErr] = useState('');
@@ -31,7 +32,18 @@ export default function Login() {
         <label htmlFor="li-u">User ID</label>
         <input id="li-u" value={user} onChange={(e) => setUser(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} required />
         <label htmlFor="li-p">Password</label>
-        <input id="li-p" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required />
+        <div className="pw-wrap">
+          <input id="li-p" type={showPw ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)}
+                 autoComplete="current-password" autoCapitalize="none" spellCheck={false} required />
+          <button type="button" className="pw-eye" onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'} aria-pressed={showPw} title={showPw ? 'Hide password' : 'Show password'}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+              <circle cx="12" cy="12" r="3" />
+              {showPw && <line x1="3" y1="3" x2="21" y2="21" />}
+            </svg>
+          </button>
+        </div>
         {showCode && <>
           <label htmlFor="li-j">Join code (shown under the laptop's QR)</label>
           <input id="li-j" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} autoCapitalize="characters" spellCheck={false} maxLength={6} />

@@ -1,6 +1,6 @@
 // ABHEDYA phone app service worker: app shell cache-first; live data (/ws, /api) always from the laptop.
-const CACHE = 'aegis-app-mwr048zn';
-const FILES = ["./","./abhedya_logo.png","./abhedya_logo_dark.png","./assets/index-C_9nCGZ4.css","./assets/index-DzOUshzJ.js","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/maskable-512.png","./index.html","./manifest.webmanifest"];
+const CACHE = 'aegis-app-mwrbustm';
+const FILES = ["./","./abhedya_logo.png","./abhedya_logo_dark.png","./assets/index-EOHTvEJ2.css","./assets/index-GEM0Y8Z-.js","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/maskable-512.png","./index.html","./manifest.webmanifest"];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('aegis-app-') && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
