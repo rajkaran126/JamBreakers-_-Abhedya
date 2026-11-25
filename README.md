@@ -2,9 +2,6 @@
 
 [![CI](https://github.com/vishwass-02/JamBreakers-_-Abhedya/actions/workflows/ci.yml/badge.svg)](https://github.com/vishwass-02/JamBreakers-_-Abhedya/actions/workflows/ci.yml)
 
-**AI-driven adaptive anti-jamming for tactical drone and vehicle radio networks.**
-Team JamBreakers · BITS2WAVE (IEEE ComSoc, BMS College of Engineering) · problem statement SW-26 *AEGIS-LINK* · software track.
-
 A simulated battlefield radio network (drones, trucks, a command post) is attacked by nine kinds of jammer.
 ABHEDYA's neural network looks at the radio spectrum, identifies the type of jammer, and picks the right
 countermeasure in about 20 ms: hop, blacklist channels, raise power or switch to a more robust modulation.
